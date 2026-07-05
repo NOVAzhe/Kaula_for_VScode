@@ -1,0 +1,30 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Kaula SOR Extensions",
+  "scopeName": "source.kaula.sor",
+  "injectionSelector": "L:source.kaula",
+  "patterns": [
+    { "include": "#sor-let" },
+    { "include": "#sor-spawn" },
+    { "include": "#sor-ownership-annotations" },
+    { "include": "#sor-arrow-flow" }
+  ],
+  "repository": {
+    "sor-let": {
+      "name": "keyword.control.sor.let.kaula",
+      "match": "\\blet\\b"
+    },
+    "sor-spawn": {
+      "name": "keyword.control.sor.spawn.kaula",
+      "match": "\\bspawn\\b"
+    },
+    "sor-ownership-annotations": {
+      "name": "storage.modifier.ownership.kaula",
+      "match": "\\b(owned|release)\\b(?=\\s+\\[|\\s+[a-zA-Z_])"
+    },
+    "sor-arrow-flow": {
+      "name": "keyword.operator.sor.arrow.kaula",
+      "match": "->"
+    }
+  }
+}

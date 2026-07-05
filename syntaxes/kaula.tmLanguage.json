@@ -1,0 +1,242 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Kaula",
+  "scopeName": "source.kaula",
+  "fileTypes": ["kl"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#attributes" },
+    { "include": "#strings" },
+    { "include": "#char-literals" },
+    { "include": "#numbers" },
+    { "include": "#function-declaration" },
+    { "include": "#import-statement" },
+    { "include": "#variable-declaration" },
+    { "include": "#keywords" },
+    { "include": "#sor-keywords" },
+    { "include": "#storage-types" },
+    { "include": "#support-types" },
+    { "include": "#constants" },
+    { "include": "#builtin-functions" },
+    { "include": "#function-call" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#module-access" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.kaula",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.line.hash.kaula",
+          "match": "#(?!\\[).*$"
+        }
+      ]
+    },
+    "attributes": {
+      "name": "meta.attribute.kaula",
+      "begin": "#\\[",
+      "end": "\\]",
+      "beginCaptures": {
+        "0": { "name": "punctuation.definition.attribute.begin.kaula" }
+      },
+      "endCaptures": {
+        "0": { "name": "punctuation.definition.attribute.end.kaula" }
+      },
+      "patterns": [
+        {
+          "name": "entity.name.tag.attribute.kaula",
+          "match": "\\b(sor|inline|no_kmm|prefix|tree|root|prefix_tree)\\b"
+        },
+        {
+          "name": "punctuation.separator.comma.kaula",
+          "match": ","
+        }
+      ]
+    },
+    "strings": {
+      "name": "string.quoted.double.kaula",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.kaula",
+          "match": "\\\\[nrt\\\\\"0]"
+        }
+      ]
+    },
+    "char-literals": {
+      "name": "string.quoted.single.kaula",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "name": "constant.character.escape.kaula",
+          "match": "\\\\[nrt\\\\\"'0]"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.kaula",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.octal.kaula",
+          "match": "\\b0[oO][0-7]+\\b"
+        },
+        {
+          "name": "constant.numeric.binary.kaula",
+          "match": "\\b0[bB][01]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.kaula",
+          "match": "\\b[0-9][0-9]*\\.[0-9]+([eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.kaula",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.kaula",
+          "match": "\\b(if|else|while|for|switch|case|default|return|break|continue)\\b"
+        },
+        {
+          "name": "keyword.declaration.kaula",
+          "match": "\\b(fn|struct|class|interface|implements|constructor|type|auto)\\b"
+        },
+        {
+          "name": "keyword.modifier.kaula",
+          "match": "\\b(pub|import|export|package|self|nonlocal)\\b"
+        },
+        {
+          "name": "keyword.other.kaula",
+          "match": "\\b(vo|spend|call|task|async|prefix|tree|object)\\b"
+        }
+      ]
+    },
+    "sor-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.sor.kaula",
+          "match": "\\b(yeide|release|extract)\\b"
+        }
+      ]
+    },
+    "storage-types": {
+      "name": "storage.type.kaula",
+      "match": "\\b(int|float|double|bool|char|string|void)\\b"
+    },
+    "support-types": {
+      "name": "support.type.kaula",
+      "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|f32|f64)\\b"
+    },
+    "constants": {
+      "name": "constant.language.kaula",
+      "match": "\\b(true|false|null)\\b"
+    },
+    "builtin-functions": {
+      "name": "support.function.builtin.kaula",
+      "match": "\\bprintln\\b"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.comparison.kaula",
+          "match": "(==|!=|<=|>=|<|>)"
+        },
+        {
+          "name": "keyword.operator.logical.kaula",
+          "match": "(&&|\\|\\|)"
+        },
+        {
+          "name": "keyword.operator.bitwise.kaula",
+          "match": "(&|\\^|<<|>>)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.kaula",
+          "match": "(\\+|-|\\*|/|%)"
+        },
+        {
+          "name": "keyword.operator.assignment.kaula",
+          "match": "="
+        },
+        {
+          "name": "keyword.operator.special.kaula",
+          "match": "(\\$|@|\\?|\\.|::)"
+        },
+        {
+          "name": "keyword.operator.arrow.kaula",
+          "match": "->"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.terminator.kaula",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.comma.kaula",
+          "match": ","
+        },
+        {
+          "name": "punctuation.separator.colon.kaula",
+          "match": ":"
+        }
+      ]
+    },
+    "function-declaration": {
+      "name": "meta.function.kaula",
+      "begin": "\\b(fn)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(",
+      "end": "\\)",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.kaula" },
+        "2": { "name": "entity.name.function.kaula" }
+      },
+      "patterns": [
+        { "include": "#storage-types" },
+        { "include": "#support-types" },
+        { "include": "#operators" }
+      ]
+    },
+    "import-statement": {
+      "name": "meta.import.kaula",
+      "match": "\\b(import)\\s+((?:std\\.[a-zA-Z_]+|[a-zA-Z_][a-zA-Z0-9_.]*))",
+      "captures": {
+        "1": { "name": "keyword.modifier.kaula" },
+        "2": { "name": "entity.name.namespace.kaula" }
+      }
+    },
+    "variable-declaration": {
+      "match": "\\b(int|float|double|bool|char|string|void|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|auto|nonlocal)\\s+(\\*\\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "captures": {
+        "1": { "name": "storage.type.kaula" },
+        "2": { "name": "keyword.operator.arithmetic.kaula" },
+        "3": { "name": "variable.other.kaula" }
+      }
+    },
+    "function-call": {
+      "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(",
+      "captures": {
+        "1": { "name": "entity.name.function.kaula" }
+      }
+    },
+    "module-access": {
+      "match": "\\b(std)\\.(io|string|memory|format|container|math|time|system|vo|prefix|task|concurrent|error|base|windows|syscall|async|i18n|gui|web|json|crypto|net|obj|logging|testing)\\b",
+      "captures": {
+        "1": { "name": "entity.name.namespace.kaula" },
+        "2": { "name": "entity.name.namespace.kaula" }
+      }
+    }
+  }
+}

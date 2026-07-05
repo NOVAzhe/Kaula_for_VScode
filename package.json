@@ -1,0 +1,57 @@
+{
+  "name": "kaula-language",
+  "displayName": "Kaula Language",
+  "description": "Kaula programming language support for VS Code",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages", "Snippets"],
+  "activationEvents": ["onLanguage:kaula"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [{
+      "id": "kaula",
+      "aliases": ["Kaula", "kaula"],
+      "extensions": [".kl"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [
+      {
+        "language": "kaula",
+        "scopeName": "source.kaula",
+        "path": "./syntaxes/kaula.tmLanguage.json"
+      },
+      {
+        "scopeName": "source.kaula.sor",
+        "path": "./syntaxes/kaula-sor.tmLanguage.json",
+        "injectTo": ["source.kaula"]
+      }
+    ],
+    "snippets": [{
+      "language": "kaula",
+      "path": "./snippets/kaula.json"
+    }],
+    "configuration": {
+      "title": "Kaula",
+      "properties": {
+        "kaula.kaulacPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the kaulac compiler executable"
+        },
+        "kaula.sorDiagnostics.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable release DAG dependency diagnostics"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.75.0",
+    "typescript": "^5.0.0"
+  }
+}

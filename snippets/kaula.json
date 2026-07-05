@@ -1,0 +1,279 @@
+{
+  "Function Definition": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2:params}) ${3:return_type} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Define a function"
+  },
+  "Main Function": {
+    "prefix": "fnmain",
+    "body": [
+      "fn main() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Main entry point"
+  },
+  "Public Function": {
+    "prefix": "pfn",
+    "body": [
+      "pub fn ${1:name}(${2:params}) ${3:return_type} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Define a public function"
+  },
+  "Struct Definition": {
+    "prefix": "struct",
+    "body": [
+      "struct ${1:Name} {",
+      "\t${2:field}: ${3:type},",
+      "\t$0",
+      "}"
+    ],
+    "description": "Define a struct"
+  },
+  "Class Definition": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Name} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Define a class"
+  },
+  "Class with Interface": {
+    "prefix": "impl",
+    "body": [
+      "class ${1:Name} implements ${2:Interface} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Class implementing an interface"
+  },
+  "Constructor": {
+    "prefix": "ctor",
+    "body": [
+      "constructor(${1:params}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Constructor definition"
+  },
+  "If Statement": {
+    "prefix": "if",
+    "body": [
+      "if (${1:condition}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "If statement"
+  },
+  "If-Else Statement": {
+    "prefix": "ife",
+    "body": [
+      "if (${1:condition}) {",
+      "\t$2",
+      "} else {",
+      "\t$0",
+      "}"
+    ],
+    "description": "If-else statement"
+  },
+  "While Loop": {
+    "prefix": "while",
+    "body": [
+      "while (${1:condition}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "While loop"
+  },
+  "For Loop": {
+    "prefix": "for",
+    "body": [
+      "for (${1:int} ${2:i} = ${3:0}; ${4:condition}; ${5:i = i + 1}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "For loop"
+  },
+  "Switch Statement": {
+    "prefix": "switch",
+    "body": [
+      "switch (${1:expression}) {",
+      "\tcase ${2:value}:",
+      "\t\t$0",
+      "\tdefault:",
+      "\t\t",
+      "}"
+    ],
+    "description": "Switch statement"
+  },
+  "Import Statement": {
+    "prefix": "import",
+    "body": "import ${1:std.${2|io,string,memory,format,container,math,time,system,vo,prefix,task,concurrent,error,base,async,i18n,gui,web,json,crypto,net,obj,logging,testing|}}",
+    "description": "Import a module"
+  },
+  "Import std.io": {
+    "prefix": "importio",
+    "body": "import std.io",
+    "description": "Import std.io module"
+  },
+  "Import std.math": {
+    "prefix": "importmath",
+    "body": "import std.math",
+    "description": "Import std.math module"
+  },
+  "Import std.memory": {
+    "prefix": "importmem",
+    "body": "import std.memory",
+    "description": "Import std.memory module"
+  },
+  "Import std.time": {
+    "prefix": "importtime",
+    "body": "import std.time",
+    "description": "Import std.time module"
+  },
+  "Import std.string": {
+    "prefix": "importstr",
+    "body": "import std.string",
+    "description": "Import std.string module"
+  },
+  "println": {
+    "prefix": "println",
+    "body": "println(\"${1:message}\")",
+    "description": "Print with newline"
+  },
+  "SOR yeide": {
+    "prefix": "yeide",
+    "body": "yeide ${1:source} -> ${2:target}",
+    "description": "SOR ownership transfer"
+  },
+  "SOR release": {
+    "prefix": "release",
+    "body": "release ${1:data} -> [${2:view_a}, ${3:view_b}]",
+    "description": "SOR ownership distribution (DAG)"
+  },
+  "SOR extract": {
+    "prefix": "extract",
+    "body": "extract ${1:items}[${2:index}] -> ${3:selected}",
+    "description": "SOR sub-element extraction"
+  },
+  "SOR spawn": {
+    "prefix": "spawn",
+    "body": [
+      "spawn ${1:name} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "SOR concurrent spawn block"
+  },
+  "SOR Function with Ownership": {
+    "prefix": "sor-fn",
+    "body": [
+      "fn ${1:name}(${2:param} ${3|owned,release|} ${4:Type}) -> ${5:RetType} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Function with SOR ownership annotations"
+  },
+  "Attribute #[sor]": {
+    "prefix": "attr-sor",
+    "body": "#[sor]",
+    "description": "SOR attribute"
+  },
+  "Attribute #[inline]": {
+    "prefix": "attr-inline",
+    "body": "#[inline]",
+    "description": "Inline attribute"
+  },
+  "Attribute #[prefix]": {
+    "prefix": "attr-prefix",
+    "body": "#[prefix]",
+    "description": "Prefix system attribute"
+  },
+  "Attribute #[tree]": {
+    "prefix": "attr-tree",
+    "body": "#[tree]",
+    "description": "Tree system attribute"
+  },
+  "VO Block": {
+    "prefix": "vo",
+    "body": [
+      "vo {",
+      "\t$0",
+      "}"
+    ],
+    "description": "VO (Virtual On-site) block"
+  },
+  "Async Block": {
+    "prefix": "async",
+    "body": [
+      "async {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Async block"
+  },
+  "Prefix Block": {
+    "prefix": "prefix",
+    "body": [
+      "prefix \"${1:name}\" {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Prefix system block"
+  },
+  "Tree Block": {
+    "prefix": "tree",
+    "body": [
+      "tree(${1:root}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Tree system block"
+  },
+  "Interface Definition": {
+    "prefix": "interface",
+    "body": [
+      "interface ${1:Name} {",
+      "\tfn ${2:method}(${3:params}) ${4:return_type}",
+      "}"
+    ],
+    "description": "Define an interface"
+  },
+  "Type Alias": {
+    "prefix": "type",
+    "body": "type ${1:Name} = ${2:value}",
+    "description": "Define a type alias"
+  },
+  "Package Declaration": {
+    "prefix": "package",
+    "body": "package ${1:name}",
+    "description": "Package declaration"
+  },
+  "Spend/Call Block": {
+    "prefix": "spend",
+    "body": [
+      "spend(${1:target}) {",
+      "\tcall(${2:index}) {",
+      "\t\t$0",
+      "\t}",
+      "}"
+    ],
+    "description": "Spend/Call block"
+  },
+  "Object Instantiation": {
+    "prefix": "object",
+    "body": [
+      "object ${1:Type} ${2:name} {",
+      "\tself(${3:field}: ${4:value})",
+      "}"
+    ],
+    "description": "Object instantiation"
+  }
+}
