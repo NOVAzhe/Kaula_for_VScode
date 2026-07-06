@@ -877,16 +877,37 @@ export const stdlibModules: Record<string, StdlibModule> = {
 
 export const moduleNames: string[] = ["io","string","memory","format","container","math","time","system","vo","prefix","task","concurrent","error","base","windows","syscall","async","i18n","gui","web","json","crypto","net","obj","logging","testing"];
 
+// Kaula 关键字（来自 lexer.go 的关键字识别）
+// 注意：string/int/float/double/bool/char/void 是类型关键字，不在此列表中
+// true/false/null 是常量，不在此列表中
 export const kaulaKeywords: string[] = [
+  // 控制流
   'if', 'else', 'while', 'for', 'switch', 'case', 'default',
-  'return', 'break', 'continue', 'fn', 'struct', 'class',
-  'interface', 'implements', 'constructor', 'type', 'auto',
+  'return', 'break', 'continue',
+  // 声明
+  'fn', 'struct', 'class', 'interface', 'implements', 'constructor',
+  'type', 'auto',
+  // 修饰符
   'pub', 'import', 'export', 'package', 'self', 'nonlocal',
+  // Kaula 特有
   'vo', 'spend', 'call', 'task', 'async', 'prefix', 'tree', 'object',
-  'yeide', 'release', 'extract'
+  // SOR 所有权
+  'yeide', 'release', 'extract',
+  // 内置函数
+  'println'
 ];
 
+// 词法分析器内置类型关键字（TOKEN_TYPE_* 系列）
+// 这些在 lexer.go 中被识别为类型关键字，不能用作标识符
 export const builtinTypes: string[] = [
-  'int', 'float', 'double', 'bool', 'char', 'string', 'void',
+  'int', 'float', 'double', 'bool', 'char', 'string', 'void'
+];
+
+// 标准库类型别名（非词法关键字，通过 std.base 模块提供）
+// 在源码中可作为类型使用，但是普通标识符，不是保留字
+export const stdlibTypeAliases: string[] = [
   'i8', 'i16', 'i32', 'i64', 'u8', 'u16', 'u32', 'u64', 'f32', 'f64'
 ];
+
+// 常量
+export const builtinConstants: string[] = ['true', 'false', 'null'];

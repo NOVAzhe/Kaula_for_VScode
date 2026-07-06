@@ -115,7 +115,7 @@
   },
   "Import Statement": {
     "prefix": "import",
-    "body": "import ${1:std.${2|io,string,memory,format,container,math,time,system,vo,prefix,task,concurrent,error,base,async,i18n,gui,web,json,crypto,net,obj,logging,testing|}}",
+    "body": "import ${1:std.${2|io,string,memory,format,container,math,time,system,vo,prefix,task,concurrent,error,base,windows,syscall,async,i18n,gui,web,json,crypto,net,obj,logging,testing|}}",
     "description": "Import a module"
   },
   "Import std.io": {
@@ -163,23 +163,25 @@
     "body": "extract ${1:items}[${2:index}] -> ${3:selected}",
     "description": "SOR sub-element extraction"
   },
-  "SOR spawn": {
-    "prefix": "spawn",
-    "body": [
-      "spawn ${1:name} {",
-      "\t$0",
-      "}"
-    ],
-    "description": "SOR concurrent spawn block"
+  "SOR Task Parameter": {
+    "prefix": "task-param",
+    "body": "task(${1:priority}) ${2:Type} ${3:name}",
+    "description": "Task parameter in function definition"
   },
-  "SOR Function with Ownership": {
+  "SOR Async Parameter": {
+    "prefix": "async-param",
+    "body": "async(${1:value}) ${2:Type} ${3:name}",
+    "description": "Async parameter in function definition"
+  },
+  "SOR Function (sor annotated)": {
     "prefix": "sor-fn",
     "body": [
-      "fn ${1:name}(${2:param} ${3|owned,release|} ${4:Type}) -> ${5:RetType} {",
+      "#[sor]",
+      "fn ${1:name}(${2:params}) ${3:ReturnType} {",
       "\t$0",
       "}"
     ],
-    "description": "Function with SOR ownership annotations"
+    "description": "Function with SOR ownership analysis enabled"
   },
   "Attribute #[sor]": {
     "prefix": "attr-sor",
@@ -275,5 +277,406 @@
       "}"
     ],
     "description": "Object instantiation"
+  },
+  "print": {
+    "prefix": "print",
+    "body": "print(\"${1:message}\")",
+    "description": "Print without newline"
+  },
+  "printf": {
+    "prefix": "printf",
+    "body": "printf(\"${1:format}\", ${2:args})",
+    "description": "Formatted print"
+  },
+  "println_int": {
+    "prefix": "printi",
+    "body": "print_int(${1:value})",
+    "description": "Print integer"
+  },
+  "For Range Loop": {
+    "prefix": "fori",
+    "body": [
+      "for (int ${1:i} = 0; ${1:i} < ${2:count}; ${1:i} = ${1:i} + 1) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "For loop with index"
+  },
+  "For Each (Array)": {
+    "prefix": "foreach",
+    "body": [
+      "for (int ${1:i} = 0; ${1:i} < ${2:array}.len; ${1:i} = ${1:i} + 1) {",
+      "\tauto ${3:item} = ${2:array}[${1:i}]",
+      "\t$0",
+      "}"
+    ],
+    "description": "Iterate over array with index"
+  },
+  "If-Else If-Else": {
+    "prefix": "elif",
+    "body": [
+      "if (${1:condition1}) {",
+      "\t$2",
+      "} else if (${3:condition2}) {",
+      "\t$4",
+      "} else {",
+      "\t$0",
+      "}"
+    ],
+    "description": "If-else if-else chain"
+  },
+  "Return Statement": {
+    "prefix": "ret",
+    "body": "return ${1:value}",
+    "description": "Return statement"
+  },
+  "Variable Declaration": {
+    "prefix": "var",
+    "body": "${1:Type} ${2:name} = ${3:value}",
+    "description": "Variable declaration with type"
+  },
+  "Auto Variable": {
+    "prefix": "auto",
+    "body": "auto ${1:name} = ${2:value}",
+    "description": "Auto type variable"
+  },
+  "Const Variable": {
+    "prefix": "const",
+    "body": "const ${1:Type} ${2:NAME} = ${3:value}",
+    "description": "Constant variable"
+  },
+  "Array Creation": {
+    "prefix": "array",
+    "body": "${1:Type}[${2:size}] ${3:name}",
+    "description": "Fixed-size array"
+  },
+  "Dynamic Array (Slice)": {
+    "prefix": "slice",
+    "body": "[]${1:Type} ${2:name}",
+    "description": "Dynamic array / slice"
+  },
+  "Map Type": {
+    "prefix": "map",
+    "body": "map[${1:KeyType}]${2:ValueType} ${3:name}",
+    "description": "Map type declaration"
+  },
+  "Pointer Type": {
+    "prefix": "ptr",
+    "body": "*${1:Type} ${2:name}",
+    "description": "Pointer type declaration"
+  },
+  "Method Definition": {
+    "prefix": "method",
+    "body": [
+      "fn (self ${1:Type}) ${2:methodName}(${3:params}) ${4:return_type} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Method definition on a type"
+  },
+  "Generic Function": {
+    "prefix": "gfn",
+    "body": [
+      "fn ${1:name}<${2:T}>(${3:params}) ${4:return_type} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Generic function"
+  },
+  "Enum Type": {
+    "prefix": "enum",
+    "body": [
+      "enum ${1:Name} {",
+      "\t${2:VALUE_A},",
+      "\t${3:VALUE_B},",
+      "\t$0",
+      "}"
+    ],
+    "description": "Enum type definition"
+  },
+  "Test Function": {
+    "prefix": "testfn",
+    "body": [
+      "#[test]",
+      "fn test_${1:name}() {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Test function with #[test] attribute"
+  },
+  "Assert Equal": {
+    "prefix": "asserteq",
+    "body": "assert_eq(${1:expected}, ${2:actual})",
+    "description": "Assert equality in test"
+  },
+  "Assert True": {
+    "prefix": "assert",
+    "body": "assert(${1:condition})",
+    "description": "Assert condition is true"
+  },
+  "SOR Union Release": {
+    "prefix": "unionrelease",
+    "body": "union release ${1:data} -> [${2:writer_a}, ${3:reader_b}]",
+    "description": "SOR union release (elected writer + readers)"
+  },
+  "SOR Full Function Template": {
+    "prefix": "sor-full",
+    "body": [
+      "#[sor]",
+      "fn ${1:process_data}(${2:input}: []${3:Item}) ${4:Result} {",
+      "\t// 所有权转移示例",
+      "\tauto ${5:owned} = yeide(${2:input})",
+      "\t",
+      "\t// 分发只读视图",
+      "\tauto ${6:view_a}, ${7:view_b} = release(${5:owned})",
+      "\t",
+      "\t// 提取子元素",
+      "\tauto ${8:elem} = extract(${5:owned}[0])",
+      "\t",
+      "\t$0",
+      "\treturn ${5:owned}",
+      "}"
+    ],
+    "description": "Full SOR function template with yeide/release/extract"
+  },
+  "Memory Allocation (KMM)": {
+    "prefix": "kmmalloc",
+    "body": "void* ${1:ptr} = kmm_v4_malloc(${2:size})",
+    "description": "KMM V4 memory allocation"
+  },
+  "Memory Free (KMM)": {
+    "prefix": "kmmfree",
+    "body": "kmm_v4_free(${1:ptr})",
+    "description": "KMM V4 memory free"
+  },
+  "KMM Scope": {
+    "prefix": "kmmscope",
+    "body": [
+      "KMM_V4_SCOPE_START {",
+      "\t$0",
+      "} KMM_V4_SCOPE_END;"
+    ],
+    "description": "KMM V4 scoped allocation block"
+  },
+  "String Format": {
+    "prefix": "strfmt",
+    "body": "string ${1:result} = format(\"${2:format}\", ${3:args})",
+    "description": "String formatting"
+  },
+  "String Concatenation": {
+    "prefix": "strcat",
+    "body": "string ${1:result} = string_concat(${2:str1}, ${3:str2})",
+    "description": "String concatenation"
+  },
+  "File Open": {
+    "prefix": "fopen",
+    "body": "File ${1:f} = file_open(\"${2:path}\", \"${3:r}\")",
+    "description": "Open a file"
+  },
+  "File Read Line": {
+    "prefix": "fread",
+    "body": "string ${1:line} = file_read_line(${2:f})",
+    "description": "Read line from file"
+  },
+  "File Write": {
+    "prefix": "fwrite",
+    "body": "file_write(${1:f}, \"${2:content}\")",
+    "description": "Write to file"
+  },
+  "Vector Create": {
+    "prefix": "vec",
+    "body": "Vector ${1:v} = vector_create()",
+    "description": "Create a vector (dynamic array)"
+  },
+  "Vector Push": {
+    "prefix": "vpush",
+    "body": "vector_push(${1:vec}, ${2:value})",
+    "description": "Push value to vector"
+  },
+  "Vector Get": {
+    "prefix": "vget",
+    "body": "vector_get(${1:vec}, ${2:index})",
+    "description": "Get value from vector at index"
+  },
+  "HashMap Create": {
+    "prefix": "hmap",
+    "body": "HashMap ${1:map} = hashmap_create()",
+    "description": "Create a hash map"
+  },
+  "HashMap Set": {
+    "prefix": "hset",
+    "body": "hashmap_set(${1:map}, ${2:key}, ${3:value})",
+    "description": "Set key-value in hash map"
+  },
+  "HashMap Get": {
+    "prefix": "hget",
+    "body": "hashmap_get(${1:map}, ${2:key})",
+    "description": "Get value from hash map by key"
+  },
+  "Thread Spawn": {
+    "prefix": "spawn",
+    "body": [
+      "Thread ${1:t} = thread_spawn(${2:entry_fn}, ${3:arg})"
+    ],
+    "description": "Spawn a new thread"
+  },
+  "Mutex Create": {
+    "prefix": "mutex",
+    "body": "Mutex ${1:m} = mutex_create()",
+    "description": "Create a mutex"
+  },
+  "Mutex Lock/Unlock": {
+    "prefix": "mutexlock",
+    "body": [
+      "mutex_lock(${1:m})",
+      "$0",
+      "mutex_unlock(${1:m})"
+    ],
+    "description": "Mutex lock/unlock block"
+  },
+  "Channel Create": {
+    "prefix": "chan",
+    "body": "Channel ${1:ch} = channel_create(${2:buffer_size})",
+    "description": "Create a channel"
+  },
+  "Channel Send": {
+    "prefix": "chsend",
+    "body": "channel_send(${1:ch}, ${2:value})",
+    "description": "Send value through channel"
+  },
+  "Channel Receive": {
+    "prefix": "chrecv",
+    "body": "${1:value} = channel_recv(${2:ch})",
+    "description": "Receive value from channel"
+  },
+  "JSON Parse": {
+    "prefix": "jsonparse",
+    "body": "JSONValue ${1:json} = json_parse(\"${2:json_string}\")",
+    "description": "Parse JSON string"
+  },
+  "JSON Get": {
+    "prefix": "jsonget",
+    "body": "json_get(${1:json}, \"${2:key}\")",
+    "description": "Get JSON value by key"
+  },
+  "JSON Stringify": {
+    "prefix": "jsonstr",
+    "body": "string ${1:str} = json_stringify(${2:json})",
+    "description": "Convert JSON to string"
+  },
+  "Log Info": {
+    "prefix": "logi",
+    "body": "log_info(\"${1:message}\")",
+    "description": "Log info level message"
+  },
+  "Log Error": {
+    "prefix": "loge",
+    "body": "log_error(\"${1:message}\")",
+    "description": "Log error level message"
+  },
+  "Log Warning": {
+    "prefix": "logw",
+    "body": "log_warn(\"${1:message}\")",
+    "description": "Log warning level message"
+  },
+  "Time Now": {
+    "prefix": "now",
+    "body": "i64 ${1:now} = time_now()",
+    "description": "Get current timestamp"
+  },
+  "Time Measure": {
+    "prefix": "timemeasure",
+    "body": [
+      "i64 ${1:start} = time_now()",
+      "$0",
+      "i64 ${2:elapsed} = time_now() - ${1:start}",
+      "printf(\"Elapsed: %lld ms\\n\", ${2:elapsed})"
+    ],
+    "description": "Measure execution time"
+  },
+  "Error Check": {
+    "prefix": "errcheck",
+    "body": [
+      "if (${1:result} == -1) {",
+      "\tprintln(\"Error: ${2:operation} failed\")",
+      "\treturn ${3:error_code}",
+      "}"
+    ],
+    "description": "Error check pattern"
+  },
+  "Defer Statement": {
+    "prefix": "defer",
+    "body": "defer ${1:cleanup_fn}(${2:args})",
+    "description": "Defer cleanup to scope exit"
+  },
+  "Try-Catch Style": {
+    "prefix": "try",
+    "body": [
+      "${1:Result} ${2:result} = ${3:try_fn}(${4:args})",
+      "if (${2:result}.is_error()) {",
+      "\t// handle error",
+      "\t$0",
+      "}"
+    ],
+    "description": "Try-catch style error handling"
+  },
+  "HTTP Server": {
+    "prefix": "httpsrv",
+    "body": [
+      "fn handle_${1:route}(req: HTTPRequest) HTTPResponse {",
+      "\t$0",
+      "\treturn http_response(200, \"OK\")",
+      "}",
+      "",
+      "fn main() {",
+      "\tHTTPServer srv = http_server_create(\":8080\")",
+      "\thttp_server_route(srv, \"GET\", \"/${1:route}\", handle_${1:route})",
+      "\thttp_server_start(srv)",
+      "}"
+    ],
+    "description": "Simple HTTP server template"
+  },
+  "GUI Window": {
+    "prefix": "guiwin",
+    "body": [
+      "fn main() {",
+      "\tGUIWindow win = gui_create_window(\"${1:Title}\", 800, 600)",
+      "\twhile (!gui_window_should_close(win)) {",
+      "\t\tgui_begin(win)",
+      "\t\t$0",
+      "\t\tgui_end(win)",
+      "\t}",
+      "\tgui_destroy_window(win)",
+      "}"
+    ],
+    "description": "GUI window template (Nuklear)"
+  },
+  "Async Task": {
+    "prefix": "asynctask",
+    "body": [
+      "Future ${1:f} = async(${2:task_fn}, ${3:arg})",
+      "// do other work...",
+      "${4:Result} ${5:result} = future_get(${1:f})"
+    ],
+    "description": "Async task with future"
+  },
+  "Comment Block": {
+    "prefix": "cmt",
+    "body": [
+      "// ============================================================================",
+      "// ${1:Section Title}",
+      "// ============================================================================"
+    ],
+    "description": "Section comment block"
+  },
+  "TODO Comment": {
+    "prefix": "todo",
+    "body": "// TODO: ${1:description}",
+    "description": "TODO comment"
+  },
+  "FIXME Comment": {
+    "prefix": "fixme",
+    "body": "// FIXME: ${1:description}",
+    "description": "FIXME comment"
   }
 }

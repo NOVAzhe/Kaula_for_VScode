@@ -3,17 +3,31 @@
   "displayName": "Kaula Language",
   "description": "Kaula programming language support for VS Code",
   "version": "0.1.0",
-  "engines": { "vscode": "^1.75.0" },
-  "categories": ["Programming Languages", "Snippets"],
-  "activationEvents": ["onLanguage:kaula"],
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets"
+  ],
+  "activationEvents": [
+    "onLanguage:kaula"
+  ],
   "main": "./out/extension.js",
   "contributes": {
-    "languages": [{
-      "id": "kaula",
-      "aliases": ["Kaula", "kaula"],
-      "extensions": [".kl"],
-      "configuration": "./language-configuration.json"
-    }],
+    "languages": [
+      {
+        "id": "kaula",
+        "aliases": [
+          "Kaula",
+          "kaula"
+        ],
+        "extensions": [
+          ".kl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
     "grammars": [
       {
         "language": "kaula",
@@ -23,20 +37,76 @@
       {
         "scopeName": "source.kaula.sor",
         "path": "./syntaxes/kaula-sor.tmLanguage.json",
-        "injectTo": ["source.kaula"]
+        "injectTo": [
+          "source.kaula"
+        ]
       }
     ],
-    "snippets": [{
-      "language": "kaula",
-      "path": "./snippets/kaula.json"
-    }],
+    "snippets": [
+      {
+        "language": "kaula",
+        "path": "./snippets/kaula.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "kaula.build",
+        "title": "Build Kaula File",
+        "category": "Kaula"
+      },
+      {
+        "command": "kaula.run",
+        "title": "Build and Run Kaula File",
+        "category": "Kaula"
+      },
+      {
+        "command": "kaula.jumpToKL",
+        "title": "Jump to Kaula Source (from C)",
+        "category": "Kaula"
+      },
+      {
+        "command": "kaula.jumpToC",
+        "title": "Jump to Generated C Code",
+        "category": "Kaula"
+      },
+      {
+        "command": "kaula.showMapping",
+        "title": "Show Source Mapping View (KL vs C)",
+        "category": "Kaula"
+      },
+      {
+        "command": "kaula.toggleSyncScroll",
+        "title": "Toggle Sync Scroll in Mapping View",
+        "category": "Kaula"
+      }
+    ],
     "configuration": {
       "title": "Kaula",
       "properties": {
-        "kaula.kaulacPath": {
+        "kaula.build.kaulacPath": {
           "type": "string",
           "default": "",
           "description": "Path to the kaulac compiler executable"
+        },
+        "kaula.build.sor": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable SOR analysis during build"
+        },
+        "kaula.build.sourceMap": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate source map file for C/KL code mapping"
+        },
+        "kaula.format.kaulafmtPath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the kaulafmt formatter executable"
+        },
+        "kaula.mapping.syncScroll": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable synchronized scrolling in source mapping view"
         },
         "kaula.sorDiagnostics.enable": {
           "type": "boolean",
@@ -51,6 +121,7 @@
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {
+    "@types/node": "^26.1.0",
     "@types/vscode": "^1.75.0",
     "typescript": "^5.0.0"
   }

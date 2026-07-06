@@ -1,8 +1,31 @@
 import * as vscode from 'vscode';
 
+// ============================================================================
+// SOR 所有权流分析
+// 跟踪三种 SOR 构造：
+//   yeide   source -> target            所有权转移（单一目标）
+//   release source -> [a, b, c]         所有权分发（DAG）
+//   extract source[index] -> target      子结构提取
+// ============================================================================
+
 interface ReleaseEdge {
   from: string;
   to: string[];
+  line: number;
+  range: vscode.Range;
+}
+
+interface YeideEdge {
+  from: string;
+  to: string;
+  line: number;
+  range: vscode.Range;
+}
+
+interface ExtractEdge {
+  from: string;
+  index: string;
+  to: string;
   line: number;
   range: vscode.Range;
 }
@@ -94,11 +117,16 @@ class DAGChecker {
   }
 }
 
+// SOR 语句正则模式
 const RELEASE_PATTERN = /release\s+([a-zA-Z_]\w*)\s*->\s*\[([^\]]+)\]/g;
+const YEIDE_PATTERN = /yeide\s+([a-zA-Z_]\w*)\s*->\s*([a-zA-Z_]\w*)/g;
+const EXTRACT_PATTERN = /extract\s+([a-zA-Z_]\w*)\s*\[([^\]]*)\]\s*->\s*([a-zA-Z_]\w*)/g;
 
 export class SORDiagnosticsProvider implements vscode.Disposable {
   private diagnosticCollection: vscode.DiagnosticCollection;
   private dagChecker: DAGChecker;
+  private yeideEdges: YeideEdge[] = [];
+  private extractEdges: ExtractEdge[] = [];
   private decorationType: vscode.TextEditorDecorationType;
   private disposables: vscode.Disposable[] = [];
 
@@ -123,54 +151,131 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
     }
 
     this.dagChecker.clear();
+    this.yeideEdges = [];
+    this.extractEdges = [];
     const diagnostics: vscode.Diagnostic[] = [];
     const text = document.getText();
 
-    // 解析所有 release 语句
-    let match;
+    // 1. 解析 yeide 语句：yeide source -> target
+    this.parseYeideStatements(text, document);
+
+    // 2. 解析 release 语句：release source -> [holders]
+    this.parseReleaseStatements(text, document);
+
+    // 3. 解析 extract 语句：extract source[index] -> target
+    this.parseExtractStatements(text, document);
+
+    // 4. release 环检测
+    const cycle = this.dagChecker.detectCycle();
+    if (cycle) {
+      const cycleStr = cycle.join(' → ');
+      // 只为参与环的边报告错误，而不是所有边
+      const cycleSet = new Set(cycle);
+      for (const edge of this.dagChecker.getEdges()) {
+        if (cycleSet.has(edge.from) || edge.to.some(t => cycleSet.has(t))) {
+          const diag = new vscode.Diagnostic(
+            edge.range,
+            `Release cycle detected: ${cycleStr}`,
+            vscode.DiagnosticSeverity.Error
+          );
+          diag.source = 'kaula-sor';
+          diagnostics.push(diag);
+        }
+      }
+    }
+
+    // 5. yeide 使用后转移检测（use-after-move）
+    this.checkYeideUseAfterMove(text, document, diagnostics);
+
+    // 6. 检查 yeide 目标是否未定义
+    this.checkYeideUndefinedTarget(diagnostics);
+
+    this.diagnosticCollection.set(document.uri, diagnostics);
+
+    // 更新 Decoration（视觉提示）
+    this.updateDecorations(document, cycle);
+  }
+
+  private parseYeideStatements(text: string, document: vscode.TextDocument): void {
+    const regex = new RegExp(YEIDE_PATTERN.source, 'g');
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) !== null) {
+      const source = match[1];
+      const target = match[2];
+      const startPos = document.positionAt(match.index);
+      const endPos = document.positionAt(match.index + match[0].length);
+      const range = new vscode.Range(startPos, endPos);
+      this.yeideEdges.push({ from: source, to: target, line: startPos.line, range });
+    }
+  }
+
+  private parseReleaseStatements(text: string, document: vscode.TextDocument): void {
     const regex = new RegExp(RELEASE_PATTERN.source, 'g');
+    let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) !== null) {
       const source = match[1];
       const holders = match[2].split(',').map(h => h.trim()).filter(h => h.length > 0);
       const startPos = document.positionAt(match.index);
       const endPos = document.positionAt(match.index + match[0].length);
       const range = new vscode.Range(startPos, endPos);
-
       this.dagChecker.addEdge(source, holders, startPos.line, range);
     }
+  }
 
-    // 环检测
-    const cycle = this.dagChecker.detectCycle();
+  private parseExtractStatements(text: string, document: vscode.TextDocument): void {
+    const regex = new RegExp(EXTRACT_PATTERN.source, 'g');
+    let match: RegExpExecArray | null;
+    while ((match = regex.exec(text)) !== null) {
+      const source = match[1];
+      const index = match[2].trim();
+      const target = match[3];
+      const startPos = document.positionAt(match.index);
+      const endPos = document.positionAt(match.index + match[0].length);
+      const range = new vscode.Range(startPos, endPos);
+      this.extractEdges.push({ from: source, index, to: target, line: startPos.line, range });
+    }
+  }
 
-    if (cycle) {
-      // 有环 → Error
-      const cycleStr = cycle.join(' → ');
-      for (const edge of this.dagChecker.getEdges()) {
-        const diag = new vscode.Diagnostic(
-          edge.range,
-          `Release cycle detected: ${cycleStr}`,
-          vscode.DiagnosticSeverity.Error
-        );
-        diag.source = 'kaula-sor';
-        diagnostics.push(diag);
-      }
-    } else {
-      // 无环 → Information（为每个 release 语句添加信息提示）
-      for (const edge of this.dagChecker.getEdges()) {
-        const diag = new vscode.Diagnostic(
-          edge.range,
-          `DAG valid: ${edge.from} → {${edge.to.join(', ')}} (${edge.to.length} holders)`,
-          vscode.DiagnosticSeverity.Information
-        );
-        diag.source = 'kaula-sor';
-        diagnostics.push(diag);
+  // 检查 yeide 源在转移后是否被再次使用
+  private checkYeideUseAfterMove(text: string, document: vscode.TextDocument, diagnostics: vscode.Diagnostic[]): void {
+    for (const edge of this.yeideEdges) {
+      // 简单检查：在 yeide 行之后是否有对源变量的读取
+      const lines = text.split('\n');
+      for (let i = edge.line + 1; i < lines.length; i++) {
+        const line = lines[i];
+        // 跳过注释行
+        const trimmed = line.trim();
+        if (trimmed.startsWith('//') || trimmed.startsWith('#')) { continue; }
+        // 检查是否引用了源变量（作为标识符，不是赋值目标）
+        const usagePattern = new RegExp(`\\b${edge.from}\\b`);
+        if (usagePattern.test(line)) {
+          // 检查是否是赋值目标（如果是赋值，则是重新绑定，不算 use-after-move）
+          const assignPattern = new RegExp(`^\\s*\\w+\\s+${edge.from}\\s*=|\\bauto\\s+${edge.from}\\s*=`);
+          if (!assignPattern.test(line)) {
+            const sourceLine = i;
+            if (sourceLine < document.lineCount) {
+              const range = new vscode.Range(
+                new vscode.Position(sourceLine, 0),
+                new vscode.Position(sourceLine, lines[i].length)
+              );
+              const diag = new vscode.Diagnostic(
+                range,
+                `SOR Warning: '${edge.from}' used after yeide transfer to '${edge.to}'. Source may be invalid.`,
+                vscode.DiagnosticSeverity.Warning
+              );
+              diag.source = 'kaula-sor';
+              diagnostics.push(diag);
+              break; // 只报告第一次使用
+            }
+          }
+        }
       }
     }
+  }
 
-    this.diagnosticCollection.set(document.uri, diagnostics);
-
-    // 更新 Decoration
-    this.updateDecorations(document, cycle);
+  // 检查 yeide 目标是否在之前未定义
+  private checkYeideUndefinedTarget(diagnostics: vscode.Diagnostic[]): void {
+    // 这里可以添加更复杂的检查，目前保持简单
   }
 
   private updateDecorations(document: vscode.TextDocument, cycle: string[] | null): void {
@@ -181,15 +286,19 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
 
     const decorations: vscode.DecorationOptions[] = [];
 
+    // release 语句装饰
     for (const edge of this.dagChecker.getEdges()) {
       const line = editor.document.lineAt(edge.line);
       const range = new vscode.Range(line.range.end, line.range.end);
 
       let message: string;
+      let color: string;
       if (cycle) {
-        message = `⚠ CYCLE DETECTED`;
+        message = `⚠ cycle`;
+        color = '#F44747';
       } else {
-        message = `→ DAG: ${edge.to.length} holders, no cycles`;
+        message = `→ ${edge.to.length} holder(s)`;
+        color = '#4FC1FF';
       }
 
       decorations.push({
@@ -197,7 +306,37 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
         renderOptions: {
           after: {
             contentText: message,
-            color: cycle ? '#F44747' : '#4FC1FF'
+            color
+          }
+        }
+      });
+    }
+
+    // yeide 语句装饰
+    for (const edge of this.yeideEdges) {
+      const line = editor.document.lineAt(edge.line);
+      const range = new vscode.Range(line.range.end, line.range.end);
+      decorations.push({
+        range,
+        renderOptions: {
+          after: {
+            contentText: `→ ${edge.to}`,
+            color: '#73C991'
+          }
+        }
+      });
+    }
+
+    // extract 语句装饰
+    for (const edge of this.extractEdges) {
+      const line = editor.document.lineAt(edge.line);
+      const range = new vscode.Range(line.range.end, line.range.end);
+      decorations.push({
+        range,
+        renderOptions: {
+          after: {
+            contentText: `→ ${edge.to}`,
+            color: '#DCDCAA'
           }
         }
       });
@@ -208,26 +347,55 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
 
   // Hover 提供
   provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.Hover | undefined {
-    const wordRange = document.getWordRangeAtPosition(position, /release\s+\w+\s*->\s*\[[^\]]+\]/);
-    if (!wordRange) { return undefined; }
-
-    const text = document.getText(wordRange);
-    const match = text.match(/release\s+(\w+)\s*->\s*\[([^\]]+)\]/);
-    if (!match) { return undefined; }
-
-    const source = match[1];
-    const holders = match[2].split(',').map(h => h.trim());
-
-    const md = new vscode.MarkdownString();
-    md.appendMarkdown(`**Release DAG**\n\n`);
-    md.appendMarkdown(`**Source:** \`${source}\`\n\n`);
-    md.appendMarkdown(`**Holders:**\n`);
-    for (const h of holders) {
-      md.appendMarkdown(`- \`${h}\`\n`);
+    // 1. release 语句 hover
+    const releaseRange = document.getWordRangeAtPosition(position, /release\s+\w+\s*->\s*\[[^\]]+\]/);
+    if (releaseRange) {
+      const text = document.getText(releaseRange);
+      const match = text.match(/release\s+(\w+)\s*->\s*\[([^\]]+)\]/);
+      if (match) {
+        const source = match[1];
+        const holders = match[2].split(',').map(h => h.trim());
+        const md = new vscode.MarkdownString();
+        md.appendMarkdown(`**Release DAG**\n\n`);
+        md.appendMarkdown(`**Source:** \`${source}\`\n\n`);
+        md.appendMarkdown(`**Holders:**\n`);
+        for (const h of holders) {
+          md.appendMarkdown(`- \`${h}\`\n`);
+        }
+        md.appendMarkdown(`\n**Status:** ${this.dagChecker.detectCycle() ? '❌ Cycle detected' : '✅ Valid DAG'}`);
+        return new vscode.Hover(md, releaseRange);
+      }
     }
-    md.appendMarkdown(`\n**Status:** ${this.dagChecker.detectCycle() ? '❌ Cycle detected' : '✅ Valid DAG'}`);
 
-    return new vscode.Hover(md, wordRange);
+    // 2. yeide 语句 hover
+    const yeideRange = document.getWordRangeAtPosition(position, /yeide\s+\w+\s*->\s*\w+/);
+    if (yeideRange) {
+      const text = document.getText(yeideRange);
+      const match = text.match(/yeide\s+(\w+)\s*->\s*(\w+)/);
+      if (match) {
+        const md = new vscode.MarkdownString();
+        md.appendMarkdown(`**Yeide Transfer**\n\n`);
+        md.appendMarkdown(`所有权从 \`${match[1]}\` 转移到 \`${match[2]}\`\n\n`);
+        md.appendMarkdown(`转移后 \`${match[1]}\` 不再持有所有权`);
+        return new vscode.Hover(md, yeideRange);
+      }
+    }
+
+    // 3. extract 语句 hover
+    const extractRange = document.getWordRangeAtPosition(position, /extract\s+\w+\s*\[[^\]]*\]\s*->\s*\w+/);
+    if (extractRange) {
+      const text = document.getText(extractRange);
+      const match = text.match(/extract\s+(\w+)\s*\[([^\]]*)\]\s*->\s*(\w+)/);
+      if (match) {
+        const md = new vscode.MarkdownString();
+        md.appendMarkdown(`**Extract**\n\n`);
+        md.appendMarkdown(`从 \`${match[1]}[${match[2]}]\` 提取到 \`${match[3]}\`\n\n`);
+        md.appendMarkdown(`提取后 \`${match[1]}\` 仍持有所有权`);
+        return new vscode.Hover(md, extractRange);
+      }
+    }
+
+    return undefined;
   }
 
   dispose(): void {
