@@ -12,6 +12,7 @@
     { "include": "#function-declaration" },
     { "include": "#import-statement" },
     { "include": "#variable-declaration" },
+    { "include": "#extern-declaration" },
     { "include": "#keywords" },
     { "include": "#sor-keywords" },
     { "include": "#storage-types" },
@@ -49,11 +50,30 @@
       "patterns": [
         {
           "name": "entity.name.tag.attribute.kaula",
-          "match": "\\b(sor|inline|no_kmm|prefix|tree|root|prefix_tree)\\b"
+          "match": "\\b(sor|inline|no_kmm|prefix|tree|root|prefix_tree|naked|section|weak|deprecated|asm|packed|aligned|volatile|test|volatile_load|volatile_store|atomic_load|atomic_store|atomic_cas|atomic_faa|fence)\\b"
+        },
+        {
+          "name": "string.quoted.double.kaula",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.kaula",
+              "match": "\\\\[nrt\\\\\"0]"
+            }
+          ]
         },
         {
           "name": "punctuation.separator.comma.kaula",
           "match": ","
+        },
+        {
+          "name": "punctuation.separator.colon.kaula",
+          "match": ":"
+        },
+        {
+          "name": "constant.numeric.integer.kaula",
+          "match": "\\b[0-9]+\\b"
         }
       ]
     },
@@ -107,15 +127,15 @@
       "patterns": [
         {
           "name": "keyword.control.kaula",
-          "match": "\\b(if|else|while|for|switch|case|default|return|break|continue)\\b"
+          "match": "\\b(if|else|while|for|switch|case|default|return|break|continue|match)\\b"
         },
         {
           "name": "keyword.declaration.kaula",
-          "match": "\\b(fn|struct|class|interface|implements|constructor|type|auto)\\b"
+          "match": "\\b(fn|struct|class|interface|implements|constructor|type|auto|enum|static|const)\\b"
         },
         {
           "name": "keyword.modifier.kaula",
-          "match": "\\b(pub|import|export|package|self|nonlocal)\\b"
+          "match": "\\b(pub|import|export|package|self|nonlocal|extern)\\b"
         },
         {
           "name": "keyword.other.kaula",
@@ -137,7 +157,7 @@
     },
     "support-types": {
       "name": "support.type.kaula",
-      "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|f32|f64)\\b"
+      "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|KString|File|bool_t|char_t|ptr)\\b"
     },
     "constants": {
       "name": "constant.language.kaula",
@@ -145,7 +165,7 @@
     },
     "builtin-functions": {
       "name": "support.function.builtin.kaula",
-      "match": "\\bprintln\\b"
+      "match": "\\b(println|print|print_char|print_int|print_float|print_bool|read_char|read_int|read_float|read_bool|read_line|read_string|sizeof|alignof|offsetof|comptime|type_name|field_count|field_name|field_type|type_kind)\\b"
     },
     "operators": {
       "patterns": [
@@ -155,7 +175,7 @@
         },
         {
           "name": "keyword.operator.logical.kaula",
-          "match": "(&&|\\|\\|)"
+          "match": "(&&|\\|\\||!)"
         },
         {
           "name": "keyword.operator.bitwise.kaula",
@@ -175,7 +195,7 @@
         },
         {
           "name": "keyword.operator.arrow.kaula",
-          "match": "->"
+          "match": "(=>|->)"
         }
       ]
     },
@@ -197,11 +217,12 @@
     },
     "function-declaration": {
       "name": "meta.function.kaula",
-      "begin": "\\b(fn)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(",
+      "begin": "\\b(extern\\s+)?(fn)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(<[^>]*>)?\\s*\\(",
       "end": "\\)",
       "beginCaptures": {
-        "1": { "name": "keyword.declaration.kaula" },
-        "2": { "name": "entity.name.function.kaula" }
+        "1": { "name": "keyword.modifier.kaula" },
+        "2": { "name": "keyword.declaration.kaula" },
+        "3": { "name": "entity.name.function.kaula" }
       },
       "patterns": [
         { "include": "#storage-types" },
@@ -218,11 +239,20 @@
       }
     },
     "variable-declaration": {
-      "match": "\\b(int|float|double|bool|char|string|void|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|auto|nonlocal)\\s+(\\*\\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\\b",
+      "match": "\\b(int|float|double|bool|char|string|void|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|KString|File|bool_t|char_t|ptr|auto|nonlocal|const|static|extern)\\s+(\\*\\s*)?([a-zA-Z_][a-zA-Z0-9_]*)\\b",
       "captures": {
         "1": { "name": "storage.type.kaula" },
         "2": { "name": "keyword.operator.arithmetic.kaula" },
         "3": { "name": "variable.other.kaula" }
+      }
+    },
+    "extern-declaration": {
+      "match": "\\b(extern)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(:\\s*([a-zA-Z_*][a-zA-Z0-9_*]*))?",
+      "captures": {
+        "1": { "name": "keyword.modifier.kaula" },
+        "2": { "name": "variable.other.kaula" },
+        "3": { "name": "punctuation.separator.colon.kaula" },
+        "4": { "name": "storage.type.kaula" }
       }
     },
     "function-call": {
@@ -232,7 +262,7 @@
       }
     },
     "module-access": {
-      "match": "\\b(std)\\.(io|string|memory|format|container|math|time|system|vo|prefix|task|concurrent|error|base|windows|syscall|async|i18n|gui|web|json|crypto|net|obj|logging|testing)\\b",
+      "match": "\\b(std)\\.(io|string|memory|format|container|math|time|system|vo|prefix|task|concurrent|error|base|windows|syscall|async|i18n|gui|web|json|crypto|net|obj|logging|testing|toml|xml)\\b",
       "captures": {
         "1": { "name": "entity.name.namespace.kaula" },
         "2": { "name": "entity.name.namespace.kaula" }

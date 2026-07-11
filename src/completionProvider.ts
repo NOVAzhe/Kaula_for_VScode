@@ -172,7 +172,7 @@ export class KaulaCompletionProvider implements vscode.CompletionItemProvider {
     // 扫描当前文件中已声明的变量名
     const text = document.getText();
     // 变量声明模式：Type name = ... 或 auto name = ...
-    const varPattern = /\b(?:int|float|double|bool|char|string|void|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|auto)\s+\*?\s*([a-zA-Z_]\w*)\s*(?:=|;|$)/g;
+    const varPattern = /\b(?:int|float|double|bool|char|string|void|i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|KString|File|bool_t|char_t|ptr|auto)\s+\*?\s*([a-zA-Z_]\w*)\s*(?:=|;|$)/g;
     let m: RegExpExecArray | null;
     while ((m = varPattern.exec(text)) !== null) {
       const name = m[1];
@@ -214,11 +214,36 @@ export class KaulaCompletionProvider implements vscode.CompletionItemProvider {
       items.push(new vscode.CompletionItem(c, vscode.CompletionItemKind.Constant));
     }
 
-    // println 内置函数
-    const printlnItem = new vscode.CompletionItem('println', vscode.CompletionItemKind.Function);
-    printlnItem.detail = 'println(...) → void';
-    printlnItem.insertText = new vscode.SnippetString('println($1)$0');
-    items.push(printlnItem);
+    // 内置函数
+    const builtins: { name: string; detail: string; snippet: string }[] = [
+      { name: 'println', detail: 'println(...) → void', snippet: 'println($1)$0' },
+      { name: 'print', detail: 'print(...) → void', snippet: 'print($1)$0' },
+      { name: 'print_char', detail: 'print_char(char) → void', snippet: 'print_char($1)$0' },
+      { name: 'print_int', detail: 'print_int(i64) → void', snippet: 'print_int($1)$0' },
+      { name: 'print_float', detail: 'print_float(f64) → void', snippet: 'print_float($1)$0' },
+      { name: 'print_bool', detail: 'print_bool(bool) → void', snippet: 'print_bool($1)$0' },
+      { name: 'read_char', detail: 'read_char() → char', snippet: 'read_char()$0' },
+      { name: 'read_int', detail: 'read_int() → i64', snippet: 'read_int()$0' },
+      { name: 'read_float', detail: 'read_float() → f64', snippet: 'read_float()$0' },
+      { name: 'read_bool', detail: 'read_bool() → bool', snippet: 'read_bool()$0' },
+      { name: 'read_line', detail: 'read_line() → char*', snippet: 'read_line()$0' },
+      { name: 'read_string', detail: 'read_string(size_t) → char*', snippet: 'read_string($1)$0' },
+      { name: 'sizeof', detail: 'sizeof(Type) → size_t', snippet: 'sizeof($1)$0' },
+      { name: 'alignof', detail: 'alignof(Type) → size_t', snippet: 'alignof($1)$0' },
+      { name: 'offsetof', detail: 'offsetof(Type, field) → size_t', snippet: 'offsetof($1, $2)$0' },
+      { name: 'comptime', detail: 'comptime(expr) → compile-time value', snippet: 'comptime($1)$0' },
+      { name: 'type_name', detail: 'type_name(expr) → string', snippet: 'type_name($1)$0' },
+      { name: 'field_count', detail: 'field_count(Type) → size_t', snippet: 'field_count($1)$0' },
+      { name: 'field_name', detail: 'field_name(Type, index) → string', snippet: 'field_name($1, $2)$0' },
+      { name: 'field_type', detail: 'field_type(Type, index) → string', snippet: 'field_type($1, $2)$0' },
+      { name: 'type_kind', detail: 'type_kind(Type) → int', snippet: 'type_kind($1)$0' },
+    ];
+    for (const b of builtins) {
+      const item = new vscode.CompletionItem(b.name, vscode.CompletionItemKind.Function);
+      item.detail = b.detail;
+      item.insertText = new vscode.SnippetString(b.snippet);
+      items.push(item);
+    }
 
     return items;
   }

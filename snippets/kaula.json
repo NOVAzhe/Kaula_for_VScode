@@ -143,6 +143,36 @@
     "body": "import std.string",
     "description": "Import std.string module"
   },
+  "Import std.container": {
+    "prefix": "importcontainer",
+    "body": "import std.container",
+    "description": "Import std.container module"
+  },
+  "Import std.system": {
+    "prefix": "importsystem",
+    "body": "import std.system",
+    "description": "Import std.system module"
+  },
+  "Import std.concurrent": {
+    "prefix": "importconcurrent",
+    "body": "import std.concurrent",
+    "description": "Import std.concurrent module"
+  },
+  "Import std.json": {
+    "prefix": "importjson",
+    "body": "import std.json",
+    "description": "Import std.json module"
+  },
+  "Import std.web": {
+    "prefix": "importweb",
+    "body": "import std.web",
+    "description": "Import std.web module"
+  },
+  "Import std.crypto": {
+    "prefix": "importcrypto",
+    "body": "import std.crypto",
+    "description": "Import std.crypto module"
+  },
   "println": {
     "prefix": "println",
     "body": "println(\"${1:message}\")",
@@ -202,6 +232,56 @@
     "prefix": "attr-tree",
     "body": "#[tree]",
     "description": "Tree system attribute"
+  },
+  "Attribute #[naked]": {
+    "prefix": "attr-naked",
+    "body": "#[naked]",
+    "description": "Naked function (no prologue/epilogue)"
+  },
+  "Attribute #[section]": {
+    "prefix": "attr-section",
+    "body": "#[section(\"${1:name}\")]",
+    "description": "Place in specific section"
+  },
+  "Attribute #[weak]": {
+    "prefix": "attr-weak",
+    "body": "#[weak]",
+    "description": "Weak symbol (overridable)"
+  },
+  "Attribute #[deprecated]": {
+    "prefix": "attr-deprecated",
+    "body": "#[deprecated]",
+    "description": "Mark as deprecated"
+  },
+  "Attribute #[asm]": {
+    "prefix": "attr-asm",
+    "body": "#[asm(\"${1:instruction}\")]",
+    "description": "Inline assembly expression"
+  },
+  "Attribute #[packed]": {
+    "prefix": "attr-packed",
+    "body": "#[packed]",
+    "description": "Remove alignment padding"
+  },
+  "Attribute #[aligned]": {
+    "prefix": "attr-aligned",
+    "body": "#[aligned(${1:16})]",
+    "description": "N-byte alignment"
+  },
+  "Attribute #[volatile]": {
+    "prefix": "attr-volatile",
+    "body": "#[volatile]",
+    "description": "Volatile qualifier"
+  },
+  "Attribute #[test]": {
+    "prefix": "attr-test",
+    "body": "#[test]",
+    "description": "Mark as test function"
+  },
+  "Attribute #[no_kmm]": {
+    "prefix": "attr-nokmm",
+    "body": "#[no_kmm]",
+    "description": "Disable KMM memory management"
   },
   "VO Block": {
     "prefix": "vo",
@@ -345,6 +425,21 @@
     "body": "const ${1:Type} ${2:NAME} = ${3:value}",
     "description": "Constant variable"
   },
+  "Static Variable": {
+    "prefix": "static",
+    "body": "static ${1:Type} ${2:name} = ${3:value}",
+    "description": "Static variable"
+  },
+  "Extern Function": {
+    "prefix": "externfn",
+    "body": "extern fn ${1:name}(${2:params}) -> ${3:void}",
+    "description": "External function declaration"
+  },
+  "Extern Variable": {
+    "prefix": "externvar",
+    "body": "extern ${1:name}: ${2:u8}",
+    "description": "External variable declaration"
+  },
   "Array Creation": {
     "prefix": "array",
     "body": "${1:Type}[${2:size}] ${3:name}",
@@ -393,6 +488,30 @@
       "}"
     ],
     "description": "Enum type definition"
+  },
+  "Struct Bit Field": {
+    "prefix": "structbit",
+    "body": [
+      "struct ${1:Name} {",
+      "\t${2:field}: ${3:u64} : ${4:1},",
+      "\t$0",
+      "}"
+    ],
+    "description": "Struct with bit fields"
+  },
+  "Generic Class": {
+    "prefix": "gclass",
+    "body": [
+      "class ${1:Name}<${2:T}> {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Generic class definition"
+  },
+  "Format String": {
+    "prefix": "fmt",
+    "body": "string ${1:result} = format_printf(\"${2:format}\", ${3:args})",
+    "description": "Formatted string creation"
   },
   "Test Function": {
     "prefix": "testfn",
@@ -678,5 +797,95 @@
     "prefix": "fixme",
     "body": "// FIXME: ${1:description}",
     "description": "FIXME comment"
+  },
+  "Match Expression": {
+    "prefix": "match",
+    "body": [
+      "match (${1:expression}) {",
+      "\t${2:Pattern} => ${3:result},",
+      "\t_ => ${4:default},",
+      "}"
+    ],
+    "description": "Pattern matching expression"
+  },
+  "Extern Function": {
+    "prefix": "externfn",
+    "body": "extern fn ${1:name}(${2:params}) -> ${3:void}",
+    "description": "External function declaration"
+  },
+  "Extern Variable": {
+    "prefix": "externvar",
+    "body": "extern ${1:name}: ${2:u8}",
+    "description": "External variable declaration"
+  },
+  "Comptime Expression": {
+    "prefix": "comptime",
+    "body": "comptime(${1:expr})",
+    "description": "Compile-time evaluation"
+  },
+  "Sizeof": {
+    "prefix": "sizeof",
+    "body": "sizeof(${1:Type})",
+    "description": "Size of type in bytes"
+  },
+  "Alignof": {
+    "prefix": "alignof",
+    "body": "alignof(${1:Type})",
+    "description": "Alignment of type in bytes"
+  },
+  "Offsetof": {
+    "prefix": "offsetof",
+    "body": "offsetof(${1:Type}, ${2:field})",
+    "description": "Offset of field in struct"
+  },
+  "Type Name": {
+    "prefix": "typename",
+    "body": "type_name(${1:expr})",
+    "description": "Get type name at compile time"
+  },
+  "Volatile Load": {
+    "prefix": "vload",
+    "body": "#[volatile_load(${1:addr})]",
+    "description": "Volatile memory read (MMIO)"
+  },
+  "Volatile Store": {
+    "prefix": "vstore",
+    "body": "#[volatile_store(${1:addr}, ${2:value})]",
+    "description": "Volatile memory write (MMIO)"
+  },
+  "Atomic Load": {
+    "prefix": "atomicload",
+    "body": "#[atomic_load(${1:ptr})]",
+    "description": "Atomic load operation"
+  },
+  "Atomic Store": {
+    "prefix": "atomicstore",
+    "body": "#[atomic_store(${1:ptr}, ${2:value})]",
+    "description": "Atomic store operation"
+  },
+  "Atomic CAS": {
+    "prefix": "atomiccas",
+    "body": "#[atomic_cas(${1:ptr}, ${2:expected}, ${3:new_val})]",
+    "description": "Atomic compare-and-swap"
+  },
+  "Atomic Fetch-Add": {
+    "prefix": "atomicfaa",
+    "body": "#[atomic_faa(${1:ptr}, ${2:delta})]",
+    "description": "Atomic fetch-and-add"
+  },
+  "Memory Fence": {
+    "prefix": "fence",
+    "body": "#[fence()]",
+    "description": "Memory barrier (full fence)"
+  },
+  "Inline Assembly": {
+    "prefix": "asm",
+    "body": "#[asm(\"${1:instruction}\")]",
+    "description": "Inline assembly expression"
+  },
+  "Function Type Alias": {
+    "prefix": "fntype",
+    "body": "type ${1:Callback} = fn(${2:params}) -> ${3:ReturnType}",
+    "description": "Function type alias"
   }
 }

@@ -42,8 +42,33 @@ export class TypeProvider {
         continue;
       }
 
-      // 函数声明：fn name(params) ReturnType {
-      const funcMatch = line.match(/^fn\s+([a-zA-Z_]\w*)\s*\(/);
+      // enum name {
+      const enumMatch = line.match(/^enum\s+([a-zA-Z_]\w*)/);
+      if (enumMatch) {
+        // enum 是类型，注册为类型别名
+        continue;
+      }
+
+      // extern fn name(params) -> ret
+      const externFnMatch = line.match(/^extern\s+fn\s+([a-zA-Z_]\w*)\s*(<[^>]*>)?\s*\(/);
+      if (externFnMatch) {
+        const funcInfo = this.parseFunctionDecl(lines, i);
+        if (funcInfo) {
+          funcInfo.isStdlib = false;
+          this.functions.set(funcInfo.name, funcInfo);
+        }
+        continue;
+      }
+
+      // extern name: type
+      const externVarMatch = line.match(/^extern\s+([a-zA-Z_]\w*)\s*:\s*([a-zA-Z_*][a-zA-Z0-9_*]*)/);
+      if (externVarMatch) {
+        this.addVariable(externVarMatch[1], externVarMatch[2], i, false);
+        continue;
+      }
+
+      // fn name(params) ReturnType { (including generic)
+      const funcMatch = line.match(/^fn\s+([a-zA-Z_]\w*)\s*(<[^>]*>)?\s*\(/);
       if (funcMatch) {
         const funcInfo = this.parseFunctionDecl(lines, i);
         if (funcInfo) {
@@ -54,6 +79,24 @@ export class TypeProvider {
 
       // 变量声明：Type name = ...  或  Type name;
       this.parseVariableDecl(line, i);
+
+      // const 声明：const Type NAME = value / const NAME = value
+      const constMatch = line.match(/^const\s+(?:[a-zA-Z_]\w*\s+)?([A-Z][a-zA-Z0-9_]*)\s*=/);
+      if (constMatch) {
+        const varName = constMatch[1];
+        const typeMatch2 = line.match(/^const\s+([a-zA-Z_]\w*)\s+/);
+        const inferredType = typeMatch2 ? typeMatch2[1] : 'const';
+        this.addVariable(varName, inferredType, i, false);
+      }
+
+      // static 声明：static name = value / static Type name = value
+      const staticMatch = line.match(/^static\s+(?:[a-zA-Z_]\w*\s+)?([a-zA-Z_]\w*)\s*(?:=|;)/);
+      if (staticMatch) {
+        const varName = staticMatch[1];
+        const typeMatch2 = line.match(/^static\s+([a-zA-Z_]\w*)\s+/);
+        const inferredType = typeMatch2 ? typeMatch2[1] : 'auto';
+        this.addVariable(varName, inferredType, i, false);
+      }
 
       // auto 声明：auto name = ...
       const autoMatch = line.match(/^auto\s+([a-zA-Z_]\w*)\s*=/);
@@ -107,17 +150,23 @@ export class TypeProvider {
 
     // 提取返回类型
     let returnType = 'void';
-    const retMatch = line.match(/\)\s*([a-zA-Z_*][\w*]*)\s*\{?\s*$/);
-    if (retMatch) {
-      returnType = retMatch[1].trim();
+    // 支持 -> 语法
+    const arrowRetMatch = line.match(/->\s*([a-zA-Z_*][\w*]*)\s*\{?\s*$/);
+    if (arrowRetMatch) {
+      returnType = arrowRetMatch[1].trim();
     } else {
-      // 检查多行
-      for (let i = startLine; i < startLine + 5 && i < lines.length; i++) {
-        const l = lines[i];
-        const multiRet = l.match(/^\s*([a-zA-Z_*][\w*]*)\s*\{/);
-        if (multiRet) {
-          returnType = multiRet[1].trim();
-          break;
+      const retMatch = line.match(/\)\s*([a-zA-Z_*][\w*]*)\s*\{?\s*$/);
+      if (retMatch) {
+        returnType = retMatch[1].trim();
+      } else {
+        // 检查多行
+        for (let i = startLine; i < startLine + 5 && i < lines.length; i++) {
+          const l = lines[i];
+          const multiRet = l.match(/^\s*([a-zA-Z_*][\w*]*)\s*\{/);
+          if (multiRet) {
+            returnType = multiRet[1].trim();
+            break;
+          }
         }
       }
     }
@@ -387,6 +436,11 @@ export class TypeProvider {
       'u64': '64位无符号整数',
       'f32': '32位浮点数 (float)',
       'f64': '64位浮点数 (double)',
+      'KString': '长度缓存字符串 { char* data; size_t len; }',
+      'File': '文件句柄 (FILE*)',
+      'bool_t': '布尔类型别名',
+      'char_t': '字符类型别名',
+      'ptr': '通用指针 (void*)',
     };
 
     const desc = typeDescriptions[typeName];

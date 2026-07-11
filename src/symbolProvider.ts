@@ -78,6 +78,20 @@ export class SymbolProvider implements vscode.DocumentSymbolProvider {
         continue;
       }
 
+      // constructor(params) {
+      const ctorMatch = line.match(/^constructor\s*\(/);
+      if (ctorMatch) {
+        const range = this.findRange(document, i, 'constructor');
+        symbols.push(new vscode.DocumentSymbol(
+          'constructor',
+          line.substring(line.indexOf('('), line.indexOf('{') + 1),
+          vscode.SymbolKind.Constructor,
+          range,
+          range
+        ));
+        continue;
+      }
+
       // type name = ...
       const typeMatch = line.match(/^type\s+([a-zA-Z_]\w*)/);
       if (typeMatch) {
@@ -87,6 +101,21 @@ export class SymbolProvider implements vscode.DocumentSymbolProvider {
           name,
           'type alias',
           vscode.SymbolKind.TypeParameter,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // enum name {
+      const enumMatch = line.match(/^enum\s+([a-zA-Z_]\w*)/);
+      if (enumMatch) {
+        const name = enumMatch[1];
+        const range = this.findRange(document, i, name);
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          'enum',
+          vscode.SymbolKind.Enum,
           range,
           range
         ));
@@ -117,6 +146,123 @@ export class SymbolProvider implements vscode.DocumentSymbolProvider {
           name,
           `pub ${pubMatch[1]}`,
           vscode.SymbolKind.Variable,
+          range,
+          range
+        ));
+      }
+
+      // static name = value / static Type name = value
+      const staticMatch = line.match(/^static\s+(?:[a-zA-Z_]\w*\s+)?([a-zA-Z_]\w*)\s*(?:=|;)/);
+      if (staticMatch) {
+        const name = staticMatch[1];
+        const range = this.findRange(document, i, name);
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          'static',
+          vscode.SymbolKind.Variable,
+          range,
+          range
+        ));
+      }
+
+      // extern fn name(params) -> ret
+      const externFnMatch = line.match(/^extern\s+fn\s+([a-zA-Z_]\w*)\s*\(/);
+      if (externFnMatch) {
+        const name = externFnMatch[1];
+        const range = this.findRange(document, i, name);
+        const detail = line.substring(line.indexOf('('));
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          `extern fn ${detail}`,
+          vscode.SymbolKind.Function,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // extern name: type
+      const externVarMatch = line.match(/^extern\s+([a-zA-Z_]\w*)\s*:/);
+      if (externVarMatch) {
+        const name = externVarMatch[1];
+        const range = this.findRange(document, i, name);
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          'extern',
+          vscode.SymbolKind.Variable,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // tree(...) { or tree name {
+      const treeMatch = line.match(/^tree\s*(?:\([^)]*\))?\s*\{?/);
+      if (treeMatch) {
+        const range = this.findRange(document, i, 'tree');
+        symbols.push(new vscode.DocumentSymbol(
+          'tree',
+          line.substring(0, line.indexOf('{') + 1),
+          vscode.SymbolKind.Module,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // object Type name {
+      const objectMatch = line.match(/^object\s+([a-zA-Z_]\w+)\s+([a-zA-Z_]\w*)/);
+      if (objectMatch) {
+        const name = objectMatch[2];
+        const range = this.findRange(document, i, name);
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          `object ${objectMatch[1]}`,
+          vscode.SymbolKind.Variable,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // vo create(...) / vo name
+      const voMatch = line.match(/^vo\s+(?:create\s*\(|([a-zA-Z_]\w*))/);
+      if (voMatch) {
+        const name = voMatch[1] || 'vo';
+        const range = this.findRange(document, i, name);
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          'vo',
+          vscode.SymbolKind.Variable,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // spend(target) { or spend name
+      const spendMatch = line.match(/^spend\s*(?:\([^)]*\))?\s*\{?/);
+      if (spendMatch) {
+        const range = this.findRange(document, i, 'spend');
+        symbols.push(new vscode.DocumentSymbol(
+          'spend',
+          line.substring(0, line.indexOf('{') + 1),
+          vscode.SymbolKind.Function,
+          range,
+          range
+        ));
+        continue;
+      }
+
+      // Type name = ... / Type name; (field-like declarations inside classes/structs)
+      const fieldMatch = line.match(/^([a-zA-Z_]\w*(?:<[^>]*>)?(?:\*?)?)\s+([a-zA-Z_]\w*)\s*(?:[=:,])/);
+      if (fieldMatch && !['if','else','while','for','switch','case','return','break','continue','fn','struct','class','interface','enum','type','import','export','pub','static','const','extern','auto','vo','spend','call','task','async','prefix','tree','object'].includes(fieldMatch[1])) {
+        const name = fieldMatch[2];
+        const range = this.findRange(document, i, name);
+        symbols.push(new vscode.DocumentSymbol(
+          name,
+          fieldMatch[1],
+          vscode.SymbolKind.Field,
           range,
           range
         ));
