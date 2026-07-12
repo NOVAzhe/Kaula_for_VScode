@@ -4,6 +4,11 @@
   "description": "Kaula programming language support for VS Code",
   "version": "0.2.0",
   "publisher": "zhe116",
+  "icon": "logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/kaula"
+  },
   "engines": {
     "vscode": "^1.75.0"
   },

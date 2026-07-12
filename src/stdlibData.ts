@@ -1583,3 +1583,45 @@ export const stdlibModules: Record<string, StdlibModule> = {
     },
   },
 };
+
+// 模块名称列表（从 stdlibModules 提取）
+export const moduleNames: string[] = Object.keys(stdlibModules);
+
+// Kaula 关键字
+export const kaulaKeywords: string[] = [
+  'fn', 'return', 'if', 'else', 'while', 'for', 'break', 'continue',
+  'var', 'let', 'const', 'struct', 'enum', 'class', 'interface',
+  'import', 'export', 'from', 'as', 'pub', 'priv', 'static',
+  'extern', 'inline', 'defer', 'match', 'case', 'default',
+  'true', 'false', 'null', 'void', 'auto',
+];
+
+// 内置类型
+export const builtinTypes: string[] = [
+  'i8', 'i16', 'i32', 'i64', 'i128',
+  'u8', 'u16', 'u32', 'u64', 'u128',
+  'f32', 'f64', 'f128',
+  'bool', 'char', 'byte', 'string', 'String',
+  'int', 'uint', 'float', 'double',
+  'usize', 'isize',
+  'void', 'null',
+];
+
+// 标准库类型别名
+export const stdlibTypeAliases: string[] = [
+  'bool_t', 'byte_t', 'char_t', 'int_t', 'uint_t',
+  'float_t', 'double_t', 'size_t', 'ssize_t',
+  'i8_t', 'i16_t', 'i32_t', 'i64_t', 'i128_t',
+  'u8_t', 'u16_t', 'u32_t', 'u64_t', 'u128_t',
+  'f32_t', 'f64_t', 'f128_t',
+  'String', 'Array', 'Map', 'Set',
+];
+
+// 内置常量
+export const builtinConstants: string[] = [
+  'true', 'false', 'null', 'void',
+  'NULL', 'EOF',
+  'MAX_INT', 'MIN_INT', 'MAX_UINT',
+  'MAX_FLOAT', 'MIN_FLOAT',
+  'PI', 'E', 'INF', 'NAN',
+];

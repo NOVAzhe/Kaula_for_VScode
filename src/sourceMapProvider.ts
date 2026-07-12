@@ -19,49 +19,24 @@ interface SourceMap {
 }
 
 export class SourceMapProvider {
-  private sourceMaps: Map<string, SourceMap> = new Map();
+  private maps: SourceMap[] = [];
 
   loadSourceMap(mapPath: string): boolean {
     try {
       const data = fs.readFileSync(mapPath, 'utf-8');
       const map: SourceMap = JSON.parse(data);
-      this.sourceMaps.set(map.target, map);
+      // normalize paths stored in the map
+      map.target = path.normalize(map.target);
+      map.source = path.normalize(map.source);
+      this.maps.push(map);
       return true;
     } catch {
       return false;
     }
   }
 
-  findMapForCFile(cFilePath: string): SourceMap | null {
-    const normalized = path.normalize(cFilePath);
-    
-    if (this.sourceMaps.has(normalized)) {
-      return this.sourceMaps.get(normalized)!;
-    }
-
-    const mapPath = normalized + '.map.json';
-    if (fs.existsSync(mapPath)) {
-      this.loadSourceMap(mapPath);
-      return this.sourceMaps.get(normalized) || null;
-    }
-
-    const dir = path.dirname(normalized);
-    const base = path.basename(normalized, '.c');
-    const altMapPath = path.join(dir, base + '.map.json');
-    if (fs.existsSync(altMapPath)) {
-      this.loadSourceMap(altMapPath);
-      return this.sourceMaps.get(normalized) || null;
-    }
-
-    const cacheDir = path.join(vscode.workspace.rootPath || '', 'cache');
-    const cacheMapPath = path.join(cacheDir, base + '.map.json');
-    if (fs.existsSync(cacheMapPath)) {
-      this.loadSourceMap(cacheMapPath);
-      const cachedC = path.join(cacheDir, base + '.c');
-      return this.sourceMaps.get(cachedC) || null;
-    }
-
-    return null;
+  clearCache(): void {
+    this.maps = [];
   }
 
   findMapForKLFile(klFilePath: string): SourceMap | null {
@@ -69,21 +44,90 @@ export class SourceMapProvider {
     const dir = path.dirname(normalized);
     const base = path.basename(normalized, '.kl');
 
-    const cacheDir = path.join(vscode.workspace.rootPath || '', 'cache');
-    const mapPath = path.join(cacheDir, base + '.map.json');
-    if (fs.existsSync(mapPath)) {
-      this.loadSourceMap(mapPath);
-      const map = this.sourceMaps.get(path.join(cacheDir, base + '.c'));
-      if (map && map.source === normalized) {
-        return map;
-      }
+    // search locations: sibling cache/, parent cache/ (up 3), workspace cache/
+    const candidates: string[] = [];
+
+    // 1. <dir>/cache/<base>.map.json
+    candidates.push(path.join(dir, 'cache', base + '.map.json'));
+
+    // 2. parent dirs cache/
+    let searchDir = dir;
+    for (let i = 0; i < 4; i++) {
+      const parent = path.dirname(searchDir);
+      if (parent === searchDir) break;
+      candidates.push(path.join(parent, 'cache', base + '.map.json'));
+      searchDir = parent;
     }
 
-    const localMapPath = path.join(dir, base + '.c.map.json');
-    if (fs.existsSync(localMapPath)) {
-      this.loadSourceMap(localMapPath);
-      const cPath = path.join(dir, base + '.c');
-      return this.sourceMaps.get(cPath) || null;
+    // 3. workspace root cache/
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      candidates.push(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'cache', base + '.map.json'));
+    }
+
+    // 4. same dir as .kl file
+    candidates.push(path.join(dir, base + '.map.json'));
+
+    // 5. <base>.c.map.json in same dir
+    candidates.push(path.join(dir, base + '.c.map.json'));
+
+    for (const mapPath of candidates) {
+      if (!fs.existsSync(mapPath)) continue;
+
+      // check if already loaded
+      let map = this.maps.find(m => path.normalize(m.target).includes(base + '.c'));
+      if (!map) {
+        this.loadSourceMap(mapPath);
+        map = this.maps.find(m => {
+          const t = path.normalize(m.target);
+          return t.endsWith(base + '.c') && path.normalize(m.source) === normalized;
+        });
+      }
+      if (map) return map;
+    }
+
+    return null;
+  }
+
+  findMapForCFile(cFilePath: string): SourceMap | null {
+    const normalized = path.normalize(cFilePath);
+    const dir = path.dirname(normalized);
+    const base = path.basename(normalized, '.c');
+
+    // check if already loaded
+    let map = this.maps.find(m => path.normalize(m.target) === normalized);
+    if (map) return map;
+
+    // search locations
+    const candidates: string[] = [];
+
+    // 1. same dir
+    candidates.push(path.join(dir, base + '.map.json'));
+
+    // 2. <filename>.map.json
+    candidates.push(normalized + '.map.json');
+
+    // 3. sibling cache/
+    candidates.push(path.join(dir, 'cache', base + '.map.json'));
+
+    // 4. parent dirs cache/
+    let searchDir = dir;
+    for (let i = 0; i < 4; i++) {
+      const parent = path.dirname(searchDir);
+      if (parent === searchDir) break;
+      candidates.push(path.join(parent, 'cache', base + '.map.json'));
+      searchDir = parent;
+    }
+
+    // 5. workspace root cache/
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      candidates.push(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'cache', base + '.map.json'));
+    }
+
+    for (const mapPath of candidates) {
+      if (!fs.existsSync(mapPath)) continue;
+      this.loadSourceMap(mapPath);
+      map = this.maps.find(m => path.normalize(m.target) === normalized);
+      if (map) return map;
     }
 
     return null;
@@ -91,7 +135,7 @@ export class SourceMapProvider {
 
   cToKL(cFilePath: string, cLine: number): vscode.Location | null {
     const map = this.findMapForCFile(cFilePath);
-    if (!map) { return null; }
+    if (!map) return null;
 
     let best: SourceMapEntry | null = null;
     for (const entry of map.entries) {
@@ -114,7 +158,7 @@ export class SourceMapProvider {
 
   klToC(klFilePath: string, klLine: number): vscode.Location | null {
     const map = this.findMapForKLFile(klFilePath);
-    if (!map) { return null; }
+    if (!map) return null;
 
     let best: SourceMapEntry | null = null;
     for (const entry of map.entries) {
@@ -139,18 +183,9 @@ export class SourceMapProvider {
     if (path.isAbsolute(sourcePath) && fs.existsSync(sourcePath)) {
       return sourcePath;
     }
-
     const cDir = path.dirname(cFilePath);
     const fromCDir = path.join(cDir, sourcePath);
-    if (fs.existsSync(fromCDir)) {
-      return fromCDir;
-    }
-
-    const workspacePath = path.join(vscode.workspace.rootPath || '', sourcePath);
-    if (fs.existsSync(workspacePath)) {
-      return workspacePath;
-    }
-
+    if (fs.existsSync(fromCDir)) return fromCDir;
     return sourcePath;
   }
 
@@ -158,25 +193,10 @@ export class SourceMapProvider {
     if (path.isAbsolute(targetPath) && fs.existsSync(targetPath)) {
       return targetPath;
     }
-
     const klDir = path.dirname(klFilePath);
     const fromKLDir = path.join(klDir, targetPath);
-    if (fs.existsSync(fromKLDir)) {
-      return fromKLDir;
-    }
-
-    const cacheDir = path.join(vscode.workspace.rootPath || '', 'cache');
-    const base = path.basename(klFilePath, '.kl');
-    const cachedC = path.join(cacheDir, base + '.c');
-    if (fs.existsSync(cachedC)) {
-      return cachedC;
-    }
-
+    if (fs.existsSync(fromKLDir)) return fromKLDir;
     return targetPath;
-  }
-
-  clearCache(): void {
-    this.sourceMaps.clear();
   }
 }
 
@@ -191,15 +211,7 @@ export class CDefinitionProvider implements vscode.DefinitionProvider {
     document: vscode.TextDocument,
     position: vscode.Position
   ): vscode.Definition | vscode.LocationLink[] | null {
-    const cFilePath = document.uri.fsPath;
-    const cLine = position.line + 1;
-
-    const klLocation = this.sourceMapProvider.cToKL(cFilePath, cLine);
-    if (klLocation) {
-      return klLocation;
-    }
-
-    return null;
+    return this.sourceMapProvider.cToKL(document.uri.fsPath, position.line + 1);
   }
 }
 

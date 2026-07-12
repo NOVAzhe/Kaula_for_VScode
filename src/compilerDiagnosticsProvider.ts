@@ -1,40 +1,54 @@
 import * as vscode from 'vscode';
 import * as child_process from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export class CompilerDiagnosticsProvider implements vscode.Disposable {
   private diagnosticCollection: vscode.DiagnosticCollection;
-  private kaulacPath: string | null = null;
 
   constructor() {
     this.diagnosticCollection = vscode.languages.createDiagnosticCollection('kaula-compiler');
-    this.findKaulac();
   }
 
-  private findKaulac(): void {
+  private resolveKaulac(): string | null {
     const config = vscode.workspace.getConfiguration('kaula');
     const configuredPath = config.get<string>('build.kaulacPath', '');
+    if (configuredPath && this.isValidPath(configuredPath)) return configuredPath;
 
-    if (configuredPath && this.isValidPath(configuredPath)) {
-      this.kaulacPath = configuredPath;
-      return;
+    if (vscode.workspace.workspaceFolders) {
+      for (const folder of vscode.workspace.workspaceFolders) {
+        const candidates = [
+          path.join(folder.uri.fsPath, 'kaula', 'kaula-compiler', 'kaulac.exe'),
+          path.join(folder.uri.fsPath, 'kaula', 'kaula-compiler', 'cmd', 'kaulac', 'kaulac.exe'),
+          path.join(folder.uri.fsPath, 'kaulac.exe'),
+        ];
+        for (const c of candidates) {
+          if (this.isValidPath(c)) return c;
+        }
+      }
     }
 
-    const toolkitPath = path.join(__dirname, '../../../../kaula/kaula-compiler/cmd/kaulac/kaulac.exe');
-    if (this.isValidPath(toolkitPath)) {
-      this.kaulacPath = toolkitPath;
-      return;
+    const outDir = path.dirname(__filename);
+    const candidates2 = [
+      path.join(outDir, '..', '..', '..', '..', 'kaula', 'kaula-compiler', 'kaulac.exe'),
+      path.join(outDir, '..', '..', '..', '..', 'kaula', 'kaula-compiler', 'cmd', 'kaulac', 'kaulac.exe'),
+    ];
+    for (const c of candidates2) {
+      const resolved = path.resolve(c);
+      if (this.isValidPath(resolved)) return resolved;
     }
 
-    const extPath = path.join(__dirname, '../bin/kaulac.exe');
-    if (this.isValidPath(extPath)) {
-      this.kaulacPath = extPath;
-    }
+    try {
+      const which = process.platform === 'win32' ? 'where' : 'which';
+      const result = child_process.execSync(`${which} kaulac`, { encoding: 'utf-8', timeout: 3000 }).trim();
+      if (result && this.isValidPath(result)) return result;
+    } catch {}
+
+    return null;
   }
 
   private isValidPath(p: string): boolean {
     try {
-      const fs = require('fs');
       return fs.existsSync(p);
     } catch {
       return false;
@@ -42,7 +56,8 @@ export class CompilerDiagnosticsProvider implements vscode.Disposable {
   }
 
   async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
-    if (!this.kaulacPath) {
+    const kaulacPath = this.resolveKaulac();
+    if (!kaulacPath) {
       return;
     }
 
@@ -50,7 +65,7 @@ export class CompilerDiagnosticsProvider implements vscode.Disposable {
     const diagnostics: vscode.Diagnostic[] = [];
 
     try {
-      const output = await this.runCompiler(filePath);
+      const output = await this.runCompiler(kaulacPath, filePath);
       diagnostics.push(...this.parseErrors(output, document));
     } catch (err) {
       // 编译失败是正常的（代码可能有错误）
@@ -59,9 +74,9 @@ export class CompilerDiagnosticsProvider implements vscode.Disposable {
     this.diagnosticCollection.set(document.uri, diagnostics);
   }
 
-  private runCompiler(filePath: string): Promise<string> {
+  private runCompiler(kaulacPath: string, filePath: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      child_process.execFile(this.kaulacPath!, [filePath, '--check'], {
+      child_process.execFile(kaulacPath, [filePath, '--check'], {
         cwd: path.dirname(filePath),
         maxBuffer: 10 * 1024 * 1024
       }, (err, stdout, stderr) => {

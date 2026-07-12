@@ -70,10 +70,9 @@ export class MappingView {
 
   private async openFromKL(klEditor: vscode.TextEditor): Promise<void> {
     const klPath = klEditor.document.uri.fsPath;
-    const klDir = path.dirname(klPath);
-    const baseName = path.basename(klPath, '.kl');
+    this.sourceMapProvider.clearCache();
 
-    const cPath = await this.findCFile(klPath);
+    const cPath = this.findCFile(klPath);
     if (!cPath) {
       vscode.window.showWarningMessage('未找到对应的 C 代码文件，请先编译并确保生成了 source map');
       return;
@@ -101,6 +100,7 @@ export class MappingView {
 
   private async openFromC(cEditor: vscode.TextEditor): Promise<void> {
     const cPath = cEditor.document.uri.fsPath;
+    this.sourceMapProvider.clearCache();
 
     const map = this.sourceMapProvider['findMapForCFile'](cPath);
     if (!map) {
@@ -132,16 +132,29 @@ export class MappingView {
     const klDir = path.dirname(klPath);
     const baseName = path.basename(klPath, '.kl');
 
-    const cacheDir = path.join(vscode.workspace.rootPath || klDir, 'cache');
-    const cachedC = path.join(cacheDir, baseName + '.c');
-    if (fs.existsSync(cachedC)) {
-      return cachedC;
+    // 1. sibling cache/
+    const localCacheC = path.join(klDir, 'cache', baseName + '.c');
+    if (fs.existsSync(localCacheC)) return localCacheC;
+
+    // 2. parent dirs cache/ (up 3)
+    let searchDir = klDir;
+    for (let i = 0; i < 4; i++) {
+      const parent = path.dirname(searchDir);
+      if (parent === searchDir) break;
+      const c = path.join(parent, 'cache', baseName + '.c');
+      if (fs.existsSync(c)) return c;
+      searchDir = parent;
     }
 
-    const localC = path.join(klDir, baseName + '.c');
-    if (fs.existsSync(localC)) {
-      return localC;
+    // 3. workspace root cache/
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      const c = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, 'cache', baseName + '.c');
+      if (fs.existsSync(c)) return c;
     }
+
+    // 4. same dir
+    const localC = path.join(klDir, baseName + '.c');
+    if (fs.existsSync(localC)) return localC;
 
     return null;
   }
@@ -296,6 +309,7 @@ export class MappingView {
   }
 
   private reloadMap(): void {
+    this.sourceMapProvider.clearCache();
     const map = this.sourceMapProvider['findMapForKLFile'](this.klFilePath);
     if (map) {
       this.currentMap = map.entries;

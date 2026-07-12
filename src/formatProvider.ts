@@ -1,39 +1,57 @@
 import * as vscode from 'vscode';
 import * as child_process from 'child_process';
 import * as path from 'path';
+import * as fs from 'fs';
 
 export class KaulaFormatProvider implements vscode.DocumentFormattingEditProvider {
-  private kaulafmtPath: string | null = null;
 
-  constructor() {
-    this.findKaulafmt();
-  }
-
-  private findKaulafmt(): void {
+  private resolveKaulafmt(): string | null {
+    // 1. user configured path (re-read every time)
     const config = vscode.workspace.getConfiguration('kaula');
     const configuredPath = config.get<string>('format.kaulafmtPath', '');
-
     if (configuredPath && this.isValidPath(configuredPath)) {
-      this.kaulafmtPath = configuredPath;
-      return;
+      return configuredPath;
     }
 
-    const toolkitPath = path.join(__dirname, '../../../../kaula/kaula-compiler/cmd/kaulafmt/kaulafmt.exe');
-    if (this.isValidPath(toolkitPath)) {
-      this.kaulafmtPath = toolkitPath;
-      return;
+    // 2. search workspace folders
+    if (vscode.workspace.workspaceFolders) {
+      for (const folder of vscode.workspace.workspaceFolders) {
+        const candidates = [
+          path.join(folder.uri.fsPath, 'kaula', 'kaula-compiler', 'kaulafmt.exe'),
+          path.join(folder.uri.fsPath, 'kaula', 'kaula-compiler', 'cmd', 'kaulafmt', 'kaulafmt.exe'),
+          path.join(folder.uri.fsPath, 'kaulafmt.exe'),
+          path.join(folder.uri.fsPath, 'bin', 'kaulafmt.exe'),
+        ];
+        for (const c of candidates) {
+          if (this.isValidPath(c)) return c;
+        }
+      }
     }
 
-    const extPath = path.join(__dirname, '../bin/kaulafmt.exe');
-    if (this.isValidPath(extPath)) {
-      this.kaulafmtPath = extPath;
-      return;
+    // 3. try relative positions from extension's out/ dir
+    const outDir = path.dirname(__filename);
+    const candidates2 = [
+      path.join(outDir, '..', '..', '..', '..', 'kaula', 'kaula-compiler', 'kaulafmt.exe'),
+      path.join(outDir, '..', '..', '..', '..', 'kaula', 'kaula-compiler', 'cmd', 'kaulafmt', 'kaulafmt.exe'),
+      path.join(outDir, '..', 'bin', 'kaulafmt.exe'),
+    ];
+    for (const c of candidates2) {
+      const resolved = path.resolve(c);
+      if (this.isValidPath(resolved)) return resolved;
     }
+
+    // 4. try PATH
+    try {
+      const which = process.platform === 'win32' ? 'where' : 'which';
+      const result = child_process.execSync(`${which} kaulafmt`, { encoding: 'utf-8', timeout: 3000 }).trim();
+      if (result && this.isValidPath(result)) return result;
+    } catch {}
+
+    return null;
   }
 
   private isValidPath(p: string): boolean {
     try {
-      const fs = require('fs');
       return fs.existsSync(p);
     } catch {
       return false;
@@ -45,7 +63,8 @@ export class KaulaFormatProvider implements vscode.DocumentFormattingEditProvide
     options: vscode.FormattingOptions,
     token: vscode.CancellationToken
   ): Promise<vscode.TextEdit[]> {
-    if (!this.kaulafmtPath) {
+    const kaulafmtPath = this.resolveKaulafmt();
+    if (!kaulafmtPath) {
       vscode.window.showWarningMessage('kaulafmt 未找到，请在设置中配置 kaula.format.kaulafmtPath');
       return [];
     }
@@ -56,7 +75,7 @@ export class KaulaFormatProvider implements vscode.DocumentFormattingEditProvide
     }
 
     try {
-      const formatted = await this.runKaulafmt(text);
+      const formatted = await this.runKaulafmt(kaulafmtPath, text, document);
       if (formatted === text) {
         return [];
       }
@@ -74,10 +93,10 @@ export class KaulaFormatProvider implements vscode.DocumentFormattingEditProvide
     }
   }
 
-  private runKaulafmt(text: string): Promise<string> {
+  private runKaulafmt(kaulafmtPath: string, text: string, document: vscode.TextDocument): Promise<string> {
     return new Promise((resolve, reject) => {
-      const cp = child_process.execFile(this.kaulafmtPath!, [], {
-        cwd: vscode.workspace.rootPath || process.cwd(),
+      const cp = child_process.execFile(kaulafmtPath, [], {
+        cwd: path.dirname(document.uri.fsPath),
         maxBuffer: 10 * 1024 * 1024
       }, (err, stdout, stderr) => {
         if (err) {

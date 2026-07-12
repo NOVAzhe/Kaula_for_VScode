@@ -90,6 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       const pos = editor.selection.active;
+      sourceMapProvider.clearCache();
       const loc = sourceMapProvider.cToKL(doc.uri.fsPath, pos.line + 1);
       if (loc) {
         await vscode.window.showTextDocument(loc.uri, {
@@ -111,6 +112,7 @@ export function activate(context: vscode.ExtensionContext) {
         return;
       }
       const pos = editor.selection.active;
+      sourceMapProvider.clearCache();
       const loc = sourceMapProvider.klToC(doc.uri.fsPath, pos.line + 1);
       if (loc) {
         await vscode.window.showTextDocument(loc.uri, {
@@ -126,8 +128,15 @@ export function activate(context: vscode.ExtensionContext) {
   const mappingView = new MappingView(sourceMapProvider);
   context.subscriptions.push(mappingView);
 
+  // 编译成功后自动并排显示映射视图，并清空 source map 缓存
+  buildProvider.setOnBuildSuccess(() => {
+    sourceMapProvider.clearCache();
+    mappingView.toggleMappingView();
+  });
+
   context.subscriptions.push(
     vscode.commands.registerCommand('kaula.showMapping', () => {
+      sourceMapProvider.clearCache();
       mappingView.toggleMappingView();
     })
   );
