@@ -689,7 +689,7 @@ export const stdlibModules: Record<string, StdlibModule> = {
       "std_free": {"args":["void*"]},
       "std_malloc": {"args":["size_t"], "return":"void*"},
       "std_release": {"args":["void*"], "return":"void*"},
-      "std_yeide": {"args":["void*", "void*"], "return":"void*"},
+      "std_yield": {"args":["void*", "void*"], "return":"void*"},
     },
   },
   "net": {

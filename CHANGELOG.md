@@ -8,7 +8,7 @@
 - `auto` type inference for literals and standard library return values
 - Code formatting via `kaulafmt` integration (`Shift+Alt+F`)
 - Compiler static analysis diagnostics via `kaulac --check`
-- SOR `yeide`/`extract` statement tracking and use-after-move detection
+- SOR `yield`/`extract` statement tracking and use-after-move detection
 
 ### Added — Navigation & Refactoring
 - Go to Definition (`F12`) for variables, functions, and `std.module.func` calls
@@ -44,7 +44,7 @@
 ### Enhanced — Completion
 - Import statement completion (`import std.` → module list)
 - `vo.` and `prefix.` member access completion
-- SOR arrow context completion (`yeide`/`release`/`extract ... ->`)
+- SOR arrow context completion (`yield`/`release`/`extract ... ->`)
 - Function completion auto-inserts parentheses
 - Separated type keywords, type aliases, and built-in constants
 

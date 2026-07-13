@@ -90,7 +90,7 @@
 ### `kaula.sorDiagnostics.enable`
 启用 Release DAG 依赖诊断。
 
-- 启用后会分析 `release` / `yeide` / `extract` 语句的依赖关系
+- 启用后会分析 `release` / `yield` / `extract` 语句的依赖关系
 - 检测循环依赖和 use-after-move
 - 详见 [sorDiagnosticsProvider.ts](../src/sorDiagnosticsProvider.ts)
 

@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 // ============================================================================
 // SOR 所有权流分析
 // 跟踪三种 SOR 构造：
-//   yeide   source -> target            所有权转移（单一目标）
+//   yield   source -> target            所有权转移（单一目标）
 //   release source -> [a, b, c]         所有权分发（DAG）
 //   extract source[index] -> target      子结构提取
 // ============================================================================
@@ -15,7 +15,7 @@ interface ReleaseEdge {
   range: vscode.Range;
 }
 
-interface YeideEdge {
+interface YieldEdge {
   from: string;
   to: string;
   line: number;
@@ -119,13 +119,13 @@ class DAGChecker {
 
 // SOR 语句正则模式
 const RELEASE_PATTERN = /release\s+([a-zA-Z_]\w*)\s*->\s*\[([^\]]+)\]/g;
-const YEIDE_PATTERN = /yeide\s+([a-zA-Z_]\w*)\s*->\s*([a-zA-Z_]\w*)/g;
+const YIELD_PATTERN = /yield\s+([a-zA-Z_]\w*)\s*->\s*([a-zA-Z_]\w*)/g;
 const EXTRACT_PATTERN = /extract\s+([a-zA-Z_]\w*)\s*\[([^\]]*)\]\s*->\s*([a-zA-Z_]\w*)/g;
 
 export class SORDiagnosticsProvider implements vscode.Disposable {
   private diagnosticCollection: vscode.DiagnosticCollection;
   private dagChecker: DAGChecker;
-  private yeideEdges: YeideEdge[] = [];
+  private yieldEdges: YieldEdge[] = [];
   private extractEdges: ExtractEdge[] = [];
   private decorationType: vscode.TextEditorDecorationType;
   private disposables: vscode.Disposable[] = [];
@@ -151,13 +151,13 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
     }
 
     this.dagChecker.clear();
-    this.yeideEdges = [];
+    this.yieldEdges = [];
     this.extractEdges = [];
     const diagnostics: vscode.Diagnostic[] = [];
     const text = document.getText();
 
-    // 1. 解析 yeide 语句：yeide source -> target
-    this.parseYeideStatements(text, document);
+    // 1. 解析 yield 语句：yield source -> target
+    this.parseYieldStatements(text, document);
 
     // 2. 解析 release 语句：release source -> [holders]
     this.parseReleaseStatements(text, document);
@@ -184,11 +184,11 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
       }
     }
 
-    // 5. yeide 使用后转移检测（use-after-move）
-    this.checkYeideUseAfterMove(text, document, diagnostics);
+    // 5. yield 使用后转移检测（use-after-move）
+    this.checkYieldUseAfterMove(text, document, diagnostics);
 
-    // 6. 检查 yeide 目标是否未定义
-    this.checkYeideUndefinedTarget(diagnostics);
+    // 6. 检查 yield 目标是否未定义
+    this.checkYieldUndefinedTarget(diagnostics);
 
     this.diagnosticCollection.set(document.uri, diagnostics);
 
@@ -196,8 +196,8 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
     this.updateDecorations(document, cycle);
   }
 
-  private parseYeideStatements(text: string, document: vscode.TextDocument): void {
-    const regex = new RegExp(YEIDE_PATTERN.source, 'g');
+  private parseYieldStatements(text: string, document: vscode.TextDocument): void {
+    const regex = new RegExp(YIELD_PATTERN.source, 'g');
     let match: RegExpExecArray | null;
     while ((match = regex.exec(text)) !== null) {
       const source = match[1];
@@ -205,7 +205,7 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
       const startPos = document.positionAt(match.index);
       const endPos = document.positionAt(match.index + match[0].length);
       const range = new vscode.Range(startPos, endPos);
-      this.yeideEdges.push({ from: source, to: target, line: startPos.line, range });
+      this.yieldEdges.push({ from: source, to: target, line: startPos.line, range });
     }
   }
 
@@ -236,10 +236,10 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
     }
   }
 
-  // 检查 yeide 源在转移后是否被再次使用
-  private checkYeideUseAfterMove(text: string, document: vscode.TextDocument, diagnostics: vscode.Diagnostic[]): void {
-    for (const edge of this.yeideEdges) {
-      // 简单检查：在 yeide 行之后是否有对源变量的读取
+  // 检查 yield 源在转移后是否被再次使用
+  private checkYieldUseAfterMove(text: string, document: vscode.TextDocument, diagnostics: vscode.Diagnostic[]): void {
+    for (const edge of this.yieldEdges) {
+      // 简单检查：在 yield 行之后是否有对源变量的读取
       const lines = text.split('\n');
       for (let i = edge.line + 1; i < lines.length; i++) {
         const line = lines[i];
@@ -260,7 +260,7 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
               );
               const diag = new vscode.Diagnostic(
                 range,
-                `SOR Warning: '${edge.from}' used after yeide transfer to '${edge.to}'. Source may be invalid.`,
+                `SOR Warning: '${edge.from}' used after yield transfer to '${edge.to}'. Source may be invalid.`,
                 vscode.DiagnosticSeverity.Warning
               );
               diag.source = 'kaula-sor';
@@ -273,8 +273,8 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
     }
   }
 
-  // 检查 yeide 目标是否在之前未定义
-  private checkYeideUndefinedTarget(diagnostics: vscode.Diagnostic[]): void {
+  // 检查 yield 目标是否在之前未定义
+  private checkYieldUndefinedTarget(diagnostics: vscode.Diagnostic[]): void {
     // 这里可以添加更复杂的检查，目前保持简单
   }
 
@@ -312,8 +312,8 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
       });
     }
 
-    // yeide 语句装饰
-    for (const edge of this.yeideEdges) {
+    // yield 语句装饰
+    for (const edge of this.yieldEdges) {
       const line = editor.document.lineAt(edge.line);
       const range = new vscode.Range(line.range.end, line.range.end);
       decorations.push({
@@ -367,17 +367,17 @@ export class SORDiagnosticsProvider implements vscode.Disposable {
       }
     }
 
-    // 2. yeide 语句 hover
-    const yeideRange = document.getWordRangeAtPosition(position, /yeide\s+\w+\s*->\s*\w+/);
-    if (yeideRange) {
-      const text = document.getText(yeideRange);
-      const match = text.match(/yeide\s+(\w+)\s*->\s*(\w+)/);
+    // 2. yield 语句 hover
+    const yieldRange = document.getWordRangeAtPosition(position, /yield\s+\w+\s*->\s*\w+/);
+    if (yieldRange) {
+      const text = document.getText(yieldRange);
+      const match = text.match(/yield\s+(\w+)\s*->\s*(\w+)/);
       if (match) {
         const md = new vscode.MarkdownString();
-        md.appendMarkdown(`**Yeide Transfer**\n\n`);
+        md.appendMarkdown(`**Yield Transfer**\n\n`);
         md.appendMarkdown(`所有权从 \`${match[1]}\` 转移到 \`${match[2]}\`\n\n`);
         md.appendMarkdown(`转移后 \`${match[1]}\` 不再持有所有权`);
-        return new vscode.Hover(md, yeideRange);
+        return new vscode.Hover(md, yieldRange);
       }
     }
 

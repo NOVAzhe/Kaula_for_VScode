@@ -147,7 +147,7 @@
       "patterns": [
         {
           "name": "keyword.control.sor.kaula",
-          "match": "\\b(yeide|release|extract)\\b"
+          "match": "\\b(yield|release|extract)\\b"
         }
       ]
     },

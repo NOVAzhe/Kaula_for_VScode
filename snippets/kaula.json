@@ -178,9 +178,9 @@
     "body": "println(\"${1:message}\")",
     "description": "Print with newline"
   },
-  "SOR yeide": {
-    "prefix": "yeide",
-    "body": "yeide ${1:source} -> ${2:target}",
+  "SOR yield": {
+    "prefix": "yield",
+    "body": "yield ${1:source} -> ${2:target}",
     "description": "SOR ownership transfer"
   },
   "SOR release": {
@@ -544,7 +544,7 @@
       "#[sor]",
       "fn ${1:process_data}(${2:input}: []${3:Item}) ${4:Result} {",
       "\t// 所有权转移示例",
-      "\tauto ${5:owned} = yeide(${2:input})",
+      "\tauto ${5:owned} = yield(${2:input})",
       "\t",
       "\t// 分发只读视图",
       "\tauto ${6:view_a}, ${7:view_b} = release(${5:owned})",
@@ -556,7 +556,7 @@
       "\treturn ${5:owned}",
       "}"
     ],
-    "description": "Full SOR function template with yeide/release/extract"
+    "description": "Full SOR function template with yield/release/extract"
   },
   "Memory Allocation (KMM)": {
     "prefix": "kmmalloc",

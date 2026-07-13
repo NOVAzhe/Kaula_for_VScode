@@ -31,7 +31,7 @@ Kaula IDE 插件为 `.kl` 文件提供完整的语言服务体验。所有功能
 | `import std.` | 标准库模块列表（io、math、net、time、os、windows、syscall 等） |
 | `std.module.` | 该模块的函数列表 |
 | 标识符后输入 `.` | 成员访问、`vo.create()`、`prefix.enter()` |
-| `yeide` / `release` / `extract ... ->` | 已声明的变量列表 |
+| `yield` / `release` / `extract ... ->` | 已声明的变量列表 |
 | 函数名后 | 自动插入括号并定位光标到参数位置 |
 | 任意位置 | Kaula 关键字、内置类型、类型别名（i8-i64 等）、常量（true/false/null） |
 
@@ -65,8 +65,8 @@ Kaula IDE 插件为 `.kl` 文件提供完整的语言服务体验。所有功能
 
 - 追踪 `release` 语句构建依赖 DAG
 - 检测循环依赖
-- 检测 `yeide` 后的 use-after-move
-- 追踪 `yeide` 和 `extract` 语句
+- 检测 `yield` 后的 use-after-move
+- 追踪 `yield` 和 `extract` 语句
 - Hover 提示和行内装饰
 
 ### 编译器静态分析

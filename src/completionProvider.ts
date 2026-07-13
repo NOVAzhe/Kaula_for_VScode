@@ -53,9 +53,9 @@ export class KaulaCompletionProvider implements vscode.CompletionItemProvider {
       return this.provideModuleCompletions();
     }
 
-    // 7. SOR 箭头右侧：yeide source -> / release source -> / extract ... ->
+    // 7. SOR 箭头右侧：yield source -> / release source -> / extract ... ->
     // 在 -> 后面应该补全标识符（变量名），这里提供常见变量名建议
-    const sorArrowMatch = textBefore.match(/\b(yeide|release|extract)\b.*->\s*(\w*)$/);
+    const sorArrowMatch = textBefore.match(/\b(yield|release|extract)\b.*->\s*(\w*)$/);
     if (sorArrowMatch) {
       return this.provideSORTargetCompletions(document, sorArrowMatch[1]);
     }
