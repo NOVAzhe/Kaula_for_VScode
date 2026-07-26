@@ -1,6 +1,5 @@
 .git/
 .vscode/
-node_modules/
 src/
 tsconfig.json
 *.vsix
@@ -8,3 +7,5 @@ tsconfig.json
 docs/
 README_en.md
 README_zh.md
+_backup/
+*.log

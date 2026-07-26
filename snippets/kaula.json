@@ -101,6 +101,33 @@
     ],
     "description": "For loop"
   },
+  "For Range Loop": {
+    "prefix": "forin",
+    "body": [
+      "for ${1:auto} ${2:i} in range(${3:10}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "For-in loop with range()"
+  },
+  "For Range (start, end)": {
+    "prefix": "forin2",
+    "body": [
+      "for ${1:auto} ${2:i} in range(${3:0}, ${4:10}) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "For-in loop with range(start, end)"
+  },
+  "For Each (Iterator)": {
+    "prefix": "foreach",
+    "body": [
+      "for ${1:auto} ${2:item} in ${3:iterable} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "For-in loop over iterable"
+  },
   "Switch Statement": {
     "prefix": "switch",
     "body": [
@@ -372,25 +399,6 @@
     "prefix": "printi",
     "body": "print_int(${1:value})",
     "description": "Print integer"
-  },
-  "For Range Loop": {
-    "prefix": "fori",
-    "body": [
-      "for (int ${1:i} = 0; ${1:i} < ${2:count}; ${1:i} = ${1:i} + 1) {",
-      "\t$0",
-      "}"
-    ],
-    "description": "For loop with index"
-  },
-  "For Each (Array)": {
-    "prefix": "foreach",
-    "body": [
-      "for (int ${1:i} = 0; ${1:i} < ${2:array}.len; ${1:i} = ${1:i} + 1) {",
-      "\tauto ${3:item} = ${2:array}[${1:i}]",
-      "\t$0",
-      "}"
-    ],
-    "description": "Iterate over array with index"
   },
   "If-Else If-Else": {
     "prefix": "elif",

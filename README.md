@@ -9,9 +9,9 @@
 ## 功能特性
 
 ### 语言基础
-- **语法高亮** — 完整的 TextMate 语法支持，涵盖 Kaula 核心语法与 SOR 扩展语法
+- **语法高亮** — 完整的 TextMate 语法支持，涵盖 Kaula 核心语法与 SOR 扩展语法，支持 for-in / range 系语句
 - **语言配置** — 括号匹配、自动闭合、`//` 和 `#` 注释切换、代码折叠
-- **代码片段** — 内置 SOR 函数、`task()`/`async()` 参数、标准库 import 等模板
+- **代码片段** — 内置 SOR 函数、`task()`/`async()` 参数、标准库 import、for-range 循环等模板
 
 ### 智能编辑
 - **标准库智能补全** — 基于 IntelliSense 的标准库自动补全（`std.module.func`）

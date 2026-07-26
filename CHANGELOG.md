@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.2.1
+
+### Enhanced — Syntax Highlighting
+- Added `in` keyword support for for-in / range statements
+- Added `for-in-statement` grammar rule for `for i in range(10) {` syntax
+- Added `range` as built-in function highlight
+
+### Enhanced — Snippets
+- Added `forin` snippet: `for auto i in range(10) {`
+- Added `forin2` snippet: `for auto i in range(0, 10) {`
+- Added `foreach` snippet: `for auto item in iterable {`
+- Replaced old index-based for loop snippets with range-based ones
+
+### Documentation
+- Updated `docs/01-features.md` with for-in / range syntax highlighting info
+- Updated README.md and README_en.md with for-in / range feature descriptions
+
 ## 0.2.0
 
 ### Added — Smart Editing
