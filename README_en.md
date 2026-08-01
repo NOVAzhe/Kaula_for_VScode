@@ -11,7 +11,7 @@
 ### Language Basics
 - **Syntax Highlighting** — Full TextMate grammar support for Kaula core language and SOR extension syntax, including for-in / range statements
 - **Language Configuration** — Bracket matching, auto-closing pairs, `//` and `#` comment toggling, code folding
-- **Code Snippets** — Pre-built snippets for SOR functions, `task()`/`async()` parameters, standard library imports, and for-range loops
+- **Code Snippets** — Pre-built snippets for SOR functions, standard library imports, and for-range loops
 
 ### Smart Editing
 - **Standard Library Auto-Completion** — IntelliSense suggestions for `std.module.func` patterns

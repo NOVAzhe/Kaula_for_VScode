@@ -220,16 +220,6 @@
     "body": "extract ${1:items}[${2:index}] -> ${3:selected}",
     "description": "SOR sub-element extraction"
   },
-  "SOR Task Parameter": {
-    "prefix": "task-param",
-    "body": "task(${1:priority}) ${2:Type} ${3:name}",
-    "description": "Task parameter in function definition"
-  },
-  "SOR Async Parameter": {
-    "prefix": "async-param",
-    "body": "async(${1:value}) ${2:Type} ${3:name}",
-    "description": "Async parameter in function definition"
-  },
   "SOR Function (sor annotated)": {
     "prefix": "sor-fn",
     "body": [
@@ -318,15 +308,6 @@
       "}"
     ],
     "description": "VO (Virtual On-site) block"
-  },
-  "Async Block": {
-    "prefix": "async",
-    "body": [
-      "async {",
-      "\t$0",
-      "}"
-    ],
-    "description": "Async block"
   },
   "Prefix Block": {
     "prefix": "prefix",
@@ -777,15 +758,6 @@
       "}"
     ],
     "description": "GUI window template (Nuklear)"
-  },
-  "Async Task": {
-    "prefix": "asynctask",
-    "body": [
-      "Future ${1:f} = async(${2:task_fn}, ${3:arg})",
-      "// do other work...",
-      "${4:Result} ${5:result} = future_get(${1:f})"
-    ],
-    "description": "Async task with future"
   },
   "Comment Block": {
     "prefix": "cmt",

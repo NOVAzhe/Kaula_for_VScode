@@ -140,7 +140,11 @@
         },
         {
           "name": "keyword.other.kaula",
-          "match": "\\b(vo|spend|call|task|async|prefix|tree|object)\\b"
+          "match": "\\b(vo|spend|call|prefix|tree|object)\\b"
+        },
+        {
+          "name": "keyword.operator.cast.kaula",
+          "match": "\\bas\\b"
         }
       ]
     },

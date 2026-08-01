@@ -256,7 +256,7 @@ export class SymbolProvider implements vscode.DocumentSymbolProvider {
 
       // Type name = ... / Type name; (field-like declarations inside classes/structs)
       const fieldMatch = line.match(/^([a-zA-Z_]\w*(?:<[^>]*>)?(?:\*?)?)\s+([a-zA-Z_]\w*)\s*(?:[=:,])/);
-      if (fieldMatch && !['if','else','while','for','switch','case','return','break','continue','fn','struct','class','interface','enum','type','import','export','pub','static','const','extern','auto','vo','spend','call','task','async','prefix','tree','object'].includes(fieldMatch[1])) {
+      if (fieldMatch && !['if','else','while','for','switch','case','return','break','continue','fn','struct','class','interface','enum','type','import','export','pub','static','const','extern','auto','vo','spend','call','prefix','tree','object'].includes(fieldMatch[1])) {
         const name = fieldMatch[2];
         const range = this.findRange(document, i, name);
         symbols.push(new vscode.DocumentSymbol(

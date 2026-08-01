@@ -19,7 +19,6 @@ Kaula IDE 插件为 `.kl` 文件提供完整的语言服务体验。所有功能
 
 ### 代码片段
 - SOR 函数模板（`#[sor]` 注解）
-- 函数参数中的 `task()` / `async()` 语法
 - 标准库 import 模块列表
 - for-in / range 循环模板（`forin`、`forin2`、`foreach`）
 

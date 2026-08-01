@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2
+
+### Changed — Synced with Kaula Compiler Update
+- Removed `task` / `async` keyword highlighting (`task(...)` statements and `task()` / `async()` function parameters are removed from the language)
+- Removed `task-param`, `async-param`, `async` block and `asynctask` snippets
+- Cleaned up `task(...)` / `async(...)` parameter parsing in type provider
+- Added `as` keyword highlighting for `as<T>(e)` cast expressions
+- Updated docs and READMEs accordingly
+
 ## 0.2.1
 
 ### Enhanced — Syntax Highlighting

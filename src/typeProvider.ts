@@ -190,11 +190,6 @@ export class TypeProvider {
       const trimmed = part.trim();
       if (!trimmed) { continue; }
 
-      // 跳过 task(...) / async(...) 参数
-      if (trimmed.startsWith('task(') || trimmed.startsWith('async(')) {
-        continue;
-      }
-
       // Type name  或  Type* name  或  *Type name
       const paramMatch = trimmed.match(/^([*]?[a-zA-Z_]\w*[*]?)\s+([a-zA-Z_]\w*)$/);
       if (paramMatch) {
