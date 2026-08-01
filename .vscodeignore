@@ -4,6 +4,7 @@ src/
 tsconfig.json
 *.vsix
 .gitignore
+release.*
 docs/
 README_en.md
 README_zh.md

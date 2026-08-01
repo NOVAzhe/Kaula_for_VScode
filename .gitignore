@@ -12,6 +12,10 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Release scripts (local only, not tracked)
+release.py
+release.ps1
+
 # Runtime data
 *.tmp
 *.bak
